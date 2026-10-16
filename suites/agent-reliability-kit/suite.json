@@ -1,0 +1,159 @@
+{
+ "_about": {
+  "repo": "agent-reliability-kit",
+  "url": "https://github.com/SovRing-Labs/agent-reliability-kit",
+  "licence": "PolyForm Small Business 1.0.0 OR PolyForm Noncommercial 1.0.0 (your choice); PolyForm Free Trial 1.0.0 for evaluation; data and shard format CC-BY-4.0",
+  "status_file": "STATUS.md",
+  "generated": "2026-10-16",
+  "schema": 1,
+  "one_line": "Deterministic dispatch routing, a Rust done-gate that demands physical proof of completion, and research grounding for agent briefs.",
+  "quicktest": "PYTHONPATH=.:bin python3 -m pytest -q -p no:cacheprovider tests/test_dispatch_router.py tests/test_research_setup.py",
+  "quicktest_s": 5,
+  "source": "README.md, DOSSIER.md, Makefile, release-scan.txt, tests/*.py, rust-done-gate/tests/test_unit.rs"
+ },
+ "tests": [
+  {
+   "id": "ARK1",
+   "title": "Dispatch router: task classes, dead-lane filtering, low-yield demotion",
+   "claim": "The router sends work only to live, productive model lanes: classification by task kind and role, dead-lane filtering (local lanes exempt), demotion of lanes with at least 4 attempts and no productive settle in 24 h (DOSSIER).",
+   "kind": "run",
+   "verify": "T=$(mktemp -d); cp -a . \"$T/r\"; (cd \"$T/r\"; export PYTHONDONTWRITEBYTECODE=1; PYTHONPATH=.:bin python3 -m pytest -q -p no:cacheprovider tests/test_dispatch_router.py) > \"$T/o\" 2>&1; rc=$?; tail -n 3 \"$T/o\"; grep -q \"1 passed\" \"$T/o\" && [ $rc -eq 0 ]; r=$?; rm -rf \"$T\"; exit $r",
+   "expect": "1 passed",
+   "evidence": [
+    "tests/test_dispatch_router.py",
+    "DOSSIER.md",
+    "schema.sql"
+   ],
+   "runtime_s": 3,
+   "needs": [
+    "python3",
+    "pytest"
+   ],
+   "cpu_flags": [],
+   "what_it_means": "On fixture databases the router maps (research, oracle, build) to classes and a build task by an architect to 'judgment'; keeps a free model and an exempt local ollama lane while dropping a dead one; and puts a productive lane ahead of a flaky one. It shows the routing rules do what the DOSSIER says on small fixtures; it does not show the routes are the best ones for your fleet, and the 4-attempt/24 h thresholds are fixed constants.",
+   "how_we_got_it": "tests/test_dispatch_router.py builds throw-away `dispatch.db` and `lane-catalog.db` with build_fixture_dbs.py (schema in schema.sql), then asserts on task_class, filter_live and demote_low_yield. Run on this laptop on 2026-10-16: 1 passed. The fixtures stand in for the private lane catalogue, which was replaced by a fixture schema at release prep on 09-29.",
+   "use_in_your_work": "If you route work across free and paid models, the same three steps (classify, drop dead lanes, demote lanes that never finish) are a cheap way to stop wasting calls on models that are down.",
+   "honest_limits": "Fixture data only; no real provider status is consulted.",
+   "corrections": []
+  },
+  {
+   "id": "ARK2",
+   "title": "Research grounding: sources checked on disk, missing target blocks the dispatch",
+   "claim": "Research grounding appends a `## RESEARCH GROUNDING (auto)` block listing found and missing sources, and returns an error if the brief's target is missing (DOSSIER).",
+   "kind": "run",
+   "verify": "T=$(mktemp -d); cp -a . \"$T/r\"; (cd \"$T/r\"; export PYTHONDONTWRITEBYTECODE=1; PYTHONPATH=.:bin python3 -m pytest -q -p no:cacheprovider tests/test_research_setup.py) > \"$T/o\" 2>&1; rc=$?; tail -n 3 \"$T/o\"; grep -q \"1 passed\" \"$T/o\" && [ $rc -eq 0 ]; r=$?; rm -rf \"$T\"; exit $r",
+   "expect": "1 passed",
+   "evidence": [
+    "tests/test_research_setup.py",
+    "DOSSIER.md"
+   ],
+   "runtime_s": 3,
+   "needs": [
+    "python3",
+    "pytest"
+   ],
+   "cpu_flags": [],
+   "what_it_means": "A brief that names a real source file and a missing file gets the real one listed as found and the missing one listed as missing, the grounding marker is appended, and a brief whose target does not exist returns an error. It proves the check reads the disk rather than trusting the brief; it checks paths exist, not that their content is relevant.",
+   "how_we_got_it": "tests/test_research_setup.py, standalone mode (`ARK_NO_NOTEBOOK=1`), in a temp directory. Run on this laptop on 2026-10-16: 1 passed.",
+   "use_in_your_work": "Before you hand a long task to an agent, check that every file the brief names exists. It is a tiny script that prevents a whole class of wasted runs.",
+   "honest_limits": "Only existence of paths is checked; the notebook mode is not exercised.",
+   "corrections": []
+  },
+  {
+   "id": "ARK3",
+   "title": "Done-gate behavioural suite: 11 real-binary verdict cases",
+   "claim": "The Rust done-gate refuses to call a task finished unless its named deliverable exists, is non-empty and was produced during the task, or a passing `--gate-cmd` proves it; every named path must pass; exit 0 VERIFIED, 1 UNVERIFIED/BLOCKED, 2 NOCLAIM (DOSSIER). 11 behavioural cases against the real binary.",
+   "kind": "external",
+   "verify": "T=$(mktemp -d); cp -a . \"$T/r\"; (cd \"$T/r\"; export PYTHONDONTWRITEBYTECODE=1; python3 -m pytest -q -p no:cacheprovider tests/test_done_gate_behaviour.py) | tail -n 3; rm -rf \"$T\"",
+   "expect": "11 passed",
+   "evidence": [
+    "tests/test_done_gate_behaviour.py",
+    "rust-done-gate/src/main.rs",
+    "DOSSIER.md"
+   ],
+   "runtime_s": 60,
+   "needs": [
+    "python3",
+    "pytest",
+    "cargo (Rust toolchain)",
+    "sqlite3 command-line tool"
+   ],
+   "cpu_flags": [],
+   "what_it_means": "Fresh deliverable is VERIFIED; missing, stale (older than the dispatch start) and empty deliverables are UNVERIFIED; a passing gate command carries a path-less claim and a failing one refuses; an unverifiable claim is refused; BLOCKED and no-claim-yet get their own verdicts; with several named paths all must pass. This is the 'physical proof' claim as executable cases. It does not show an agent cannot fake the file itself: a file that exists, is fresh and non-empty passes.",
+   "how_we_got_it": "tests/test_done_gate_behaviour.py builds a workspace with `control-center/dispatch.db` (schema.sql), a dispatch log and optionally a deliverable, builds the binary with `cargo build --offline` and runs it. Not run for this record (needs cargo). A trial run of the whole suite in a temporary copy on this laptop on 2026-10-16 printed `14 passed in 8.56s`; the DOSSIER records 14/14 (3 unit groups + 11 behavioural cases) on 2026-10-01.",
+   "use_in_your_work": "Add the same check to any pipeline where an agent says 'done': require a named file newer than the task start, or a command that exits 0.",
+   "honest_limits": "Needs the Rust toolchain; the gate shells out to sqlite3 and quotes (does not parameterise) task ids (DOSSIER Limits); `done-gate --selftest` is fleet-specific and not meaningful outside it.",
+   "corrections": []
+  },
+  {
+   "id": "ARK4",
+   "title": "Rust unit test and the Python wrapper around cargo test",
+   "claim": "`make test` also runs `cargo test --offline` in rust-done-gate (release-scan: 'pytest 3 passed; cargo test 1 passed (4/4 passed)' at 2026-09-29).",
+   "kind": "external",
+   "verify": "T=$(mktemp -d); cp -a . \"$T/r\"; (cd \"$T/r\"; export PYTHONDONTWRITEBYTECODE=1; python3 -m pytest -q -p no:cacheprovider tests/test_done_gate.py; cd rust-done-gate && cargo test --offline) 2>&1 | tail -n 5; rm -rf \"$T\"",
+   "expect": "1 passed (pytest wrapper) and test result: ok. 1 passed (cargo)",
+   "evidence": [
+    "tests/test_done_gate.py",
+    "rust-done-gate/tests/test_unit.rs",
+    "release-scan.txt"
+   ],
+   "runtime_s": 60,
+   "needs": [
+    "python3",
+    "pytest",
+    "cargo (Rust toolchain)"
+   ],
+   "cpu_flags": [],
+   "what_it_means": "The single Rust unit test (`test_done_gate_help`) and the pytest wrapper pass, meaning the binary builds offline and answers --help. This is a build-sanity check, not a behavioural one; ARK3 holds the behaviour.",
+   "how_we_got_it": "rust-done-gate/tests/test_unit.rs and tests/test_done_gate.py; the 2026-09-29 count (3 pytest + 1 cargo) is recorded in release-scan.txt; later counts are in the DOSSIER (14/14 on 2026-10-01). Not run for this record because it needs cargo.",
+   "use_in_your_work": "Treat it as the smoke test after a rebuild of the gate binary.",
+   "honest_limits": "Weak on its own: it checks only that the binary starts.",
+   "corrections": []
+  },
+  {
+   "id": "ARK5",
+   "title": "Recorded gate latency and fleet usage figures",
+   "claim": "'Gate wall time, release build: median 12.2 ms, p90 21.6 ms (50 runs, incl. SQLite lookups)'; 'Fleet dispatches recorded 1,175; tasks ratified done through the gate 883, 462 (52%) with hashed deliverable rows; dispatches settled to review instead of done 86' (DOSSIER).",
+   "kind": "file",
+   "verify": "grep -q 'median 12.2 ms, p90 21.6 ms (50 runs' DOSSIER.md && grep -q 'Fleet dispatches recorded | 1,175' DOSSIER.md && grep -q '883; 462 (52%)' DOSSIER.md && grep -q 'review instead of done | 86' DOSSIER.md && echo 'recorded: 12.2 ms / 21.6 ms, 1,175, 883, 462 (52%), 86'",
+   "expect": "recorded: 12.2 ms / 21.6 ms, 1,175, 883, 462 (52%), 86",
+   "evidence": [
+    "DOSSIER.md"
+   ],
+   "runtime_s": 1,
+   "needs": [
+    "bash",
+    "grep"
+   ],
+   "cpu_flags": [],
+   "what_it_means": "The DOSSIER states a typical gate latency of a few tens of milliseconds and fleet usage counts. Passing here proves only that these figures are written in the committed DOSSIER. The latency test in the suite (`test_latency`) asserts only a loose bound of under 1000 ms median; the 12.2/21.6 ms figures are a release build measured separately. The usage counts come from the author's private fleet database, which is not in the repo.",
+   "how_we_got_it": "Latency: 50 runs of the release build including SQLite lookups, 'this repo' per the DOSSIER (machine and date not recorded beyond the DOSSIER's 2026-10-01 test line). Usage counts: 'fleet DB, verified 10-01'.",
+   "use_in_your_work": "A feel for cost: the gate is cheap enough to run on every completion.",
+   "honest_limits": "Not reproducible from the repo: the fleet DB and the 50-run harness are not shipped. In the DOSSIER the 52% means 462 of 883 ratified tasks had hashed deliverable rows, i.e. 48% were not gated on a hashed file.",
+   "corrections": []
+  },
+  {
+   "id": "ARK6",
+   "title": "Release scan: no leaks, no home paths, nothing vendored",
+   "claim": "gitleaks 8.24.0: no leaks found; home-directory paths of the development machine: 0; vendored third-party binaries/sources: none (release-scan.txt).",
+   "kind": "file",
+   "verify": "grep -q 'no leaks found' release-scan.txt && grep -q 'machine (grep -rn over the tree): 0' release-scan.txt && ! grep -rIl --exclude-dir=.git --exclude=release-scan.txt -E '/home/[a-z]+/' . && echo 'scan recorded; no /home/<user>/ path in the tree'",
+   "expect": "scan recorded; no /home/<user>/ path in the tree",
+   "evidence": [
+    "release-scan.txt",
+    "PROVENANCE.md"
+   ],
+   "runtime_s": 2,
+   "needs": [
+    "bash",
+    "grep"
+   ],
+   "cpu_flags": [],
+   "what_it_means": "The committed scan says no secrets and no developer paths and the path grep is re-run on the clone. gitleaks itself is not re-run.",
+   "how_we_got_it": "release-scan.txt, gitleaks 8.24.0 `detect --no-git -s . --redact`, at release prep (the `make test` line in it is dated 2026-09-29).",
+   "use_in_your_work": "Before publishing your own agent tooling, run the same two checks.",
+   "honest_limits": "Only the grep is re-run here.",
+   "corrections": []
+  }
+ ]
+}

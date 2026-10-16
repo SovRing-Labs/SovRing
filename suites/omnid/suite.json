@@ -1,0 +1,248 @@
+{
+  "_about": {
+    "repo": "omnid",
+    "url": "https://github.com/SovRing-Labs/omnid",
+    "one_line": "One small C++ server for local embeddings (nomic-embed-text v1.5 and BitNet-embedding-270M on llama.cpp), a hardened local web face and an MCP face. Models and the bitnet.cpp tree are not shipped.",
+    "quicktest": "python3 -m pytest --collect-only -q -p no:cacheprovider tests",
+    "quicktest_s": 2,
+    "licence": "Apache-2.0 (LICENSE, NOTICE)",
+    "status_file": "STATUS.md",
+    "generated": "2026-10-16",
+    "schema": 1,
+    "source": "README.md, DOSSIER.md, TECHNICAL-DISCLOSURE.md, PROVENANCE.md, NOTICE, CHANGELOG.md, tests/test_omnid.py. Note: quicktest only collects tests; every behavioural test needs a cargo-free but bitnet.cpp-dependent build (g++) plus model files."
+  },
+  "tests": [
+    {
+      "id": "O1",
+      "title": "Test suite is collectable: 12 tests present (no build needed)",
+      "claim": "tests/test_omnid.py holds the omnid gates: ping, nomic parity, bitnet270m, concurrency, errors, exec/heads forwarding, three web-face tests, MCP face, SSE",
+      "kind": "run",
+      "verify": "python3 -m pytest --collect-only -q -p no:cacheprovider tests 2>&1 | tail -2",
+      "expect": "12 tests collected",
+      "evidence": [
+        "tests/test_omnid.py",
+        "DOSSIER.md"
+      ],
+      "runtime_s": 2,
+      "needs": [
+        "python3",
+        "pytest",
+        "numpy"
+      ],
+      "cpu_flags": [],
+      "what_it_means": "Python can import the client and the test file and sees all twelve tests. Passing proves only that the suite is present and importable on your machine; it does NOT run any of them, because they start the built omnid binary and need model files. Treat it as an inventory check, not a result.",
+      "how_we_got_it": "`python3 -m pytest --collect-only -q tests` from the repo root, 2026-10-16. The tests themselves were written for the 0.1.0 release (CHANGELOG.md, 2026-10-10).",
+      "use_in_your_work": "Confirm your checkout is complete before you spend time building the binary.",
+      "honest_limits": "No omnid behaviour is verified by this row. Every behavioural row below is external because it needs a build and models.",
+      "corrections": []
+    },
+    {
+      "id": "O2",
+      "title": "Embeddings match Ollama's nomic-embed-text: cosine > 0.9999",
+      "claim": "Embeddings equal Ollama's nomic-embed-text to cosine > 0.9999 on the same GGUF (768-d)",
+      "kind": "external",
+      "verify": "BITNET_DIR=$HOME/projects/bitnet ./build.sh && OMNID_NOMIC_GGUF=<path> OMNID_BITNET_GGUF=<path> python3 -m pytest -q -p no:cacheprovider tests -k test_nomic_matches_ollama",
+      "expect": "1 passed (skips if Ollama is not reachable on 127.0.0.1:11434)",
+      "evidence": [
+        "tests/test_omnid.py",
+        "DOSSIER.md",
+        "TECHNICAL-DISCLOSURE.md"
+      ],
+      "runtime_s": 300,
+      "needs": [
+        "a built microsoft/BitNet (bitnet.cpp) tree with libllama",
+        "g++ C++17",
+        "your own nomic-embed-text v1.5 GGUF",
+        "python3",
+        "pytest",
+        "numpy",
+        "Ollama serving nomic-embed-text on 127.0.0.1:11434"
+      ],
+      "cpu_flags": [],
+      "what_it_means": "Twelve texts are embedded by omnid (its own llama.cpp contexts) and by Ollama from the same nomic-embed-text v1.5 model, and the test asserts the output is 768-dimensional and every pair of unit vectors has cosine above 0.9999. Passing proves omnid reproduces the reference embedder's vectors for those texts, so you can swap one for the other in a retrieval index. It does not show equal speed, or equality on other models or very long inputs.",
+      "how_we_got_it": "tests/test_omnid.py::test_nomic_matches_ollama; omnid built with build.sh against a bitnet.cpp tree. The machine, the date and the result file are not recorded in the repo (DOSSIER.md and TECHNICAL-DISCLOSURE.md state the threshold only).",
+      "use_in_your_work": "Run local embeddings for a private notes or code search without a cloud API, and without keeping Ollama running, keeping vectors compatible with an existing Ollama-built index.",
+      "honest_limits": "External: needs a bitnet.cpp build, the model file (not shipped) and Ollama for the comparison. No result file is committed.",
+      "corrections": []
+    },
+    {
+      "id": "O3",
+      "title": "BitNet-embedding-270M returns unit vectors of 640 dimensions",
+      "claim": "BitNet-embedding-270M (640-d) served by the same binary; unit norm within 1e-4",
+      "kind": "external",
+      "verify": "BITNET_DIR=$HOME/projects/bitnet ./build.sh && OMNID_NOMIC_GGUF=<path> OMNID_BITNET_GGUF=<path> python3 -m pytest -q -p no:cacheprovider tests -k 'test_bitnet270m or test_ping or test_concurrent_clients or test_errors_do_not_kill_server'",
+      "expect": "4 passed",
+      "evidence": [
+        "tests/test_omnid.py",
+        "README.md"
+      ],
+      "runtime_s": 300,
+      "needs": [
+        "a built microsoft/BitNet (bitnet.cpp) tree with libllama",
+        "g++ C++17",
+        "your own nomic-embed-text v1.5 GGUF",
+        "python3",
+        "pytest",
+        "numpy",
+        "BitNet-embedding-270M GGUF"
+      ],
+      "cpu_flags": [],
+      "what_it_means": "The second model loads, answers with a 640-number vector of length one, four client threads get identical vectors for the same texts (within 1e-6), and a bad op or unknown model returns an error without killing the server. Passing proves the basic service contract. It says nothing about the quality of the 270M vectors.",
+      "how_we_got_it": "tests/test_omnid.py (test_ping, test_bitnet270m, test_concurrent_clients, test_errors_do_not_kill_server) against a locally built omnid; no result file or machine is recorded in the repo.",
+      "use_in_your_work": "One small resident server shared by several local tools instead of one embedder process per tool.",
+      "honest_limits": "External: needs build and models. Only correctness of the contract, not quality or throughput.",
+      "corrections": []
+    },
+    {
+      "id": "O4",
+      "title": "Web face: token required, proxy with security headers, no all-interface bind",
+      "claim": "one device token (401 without it), path routing with prefix stripping and Referer fallback for assets, X-Content-Type-Options nosniff, listeners restricted so all-interface binds are refused",
+      "kind": "external",
+      "verify": "BITNET_DIR=$HOME/projects/bitnet ./build.sh && OMNID_NOMIC_GGUF=<path> OMNID_BITNET_GGUF=<path> python3 -m pytest -q -p no:cacheprovider tests -k 'test_web_requires_token or test_web_proxies_app_and_assets or test_web_refuses_all_interfaces'",
+      "expect": "3 passed",
+      "evidence": [
+        "tests/test_omnid.py",
+        "TECHNICAL-DISCLOSURE.md",
+        "README.md"
+      ],
+      "runtime_s": 60,
+      "needs": [
+        "a built microsoft/BitNet (bitnet.cpp) tree with libllama",
+        "g++ C++17",
+        "your own nomic-embed-text v1.5 GGUF",
+        "python3",
+        "pytest",
+        "numpy"
+      ],
+      "cpu_flags": [],
+      "what_it_means": "With a throwaway app behind it, omnid answers 401 until it gets the device token, then serves the app, rewrites asset requests by Referer, adds the nosniff header, and a connection on all interfaces is refused. Passing proves those security behaviours on loopback. It is not a penetration test: it covers three requests, not header completeness, token strength or abuse patterns.",
+      "how_we_got_it": "tests/test_omnid.py, the web fixture and three web tests; run against a locally built omnid. Machine and date not recorded in the repo.",
+      "use_in_your_work": "Put several personal local web apps behind one authenticated local door instead of exposing each port.",
+      "honest_limits": "External. Web-face behaviour under load is explicitly not measured (DOSSIER.md Limits, TECHNICAL-DISCLOSURE.md section 6).",
+      "corrections": []
+    },
+    {
+      "id": "O5",
+      "title": "SSE streams chunk by chunk through the web face",
+      "claim": "SSE passthrough streamed chunk by chunk (first event delivered before the stream ends)",
+      "kind": "external",
+      "verify": "BITNET_DIR=$HOME/projects/bitnet ./build.sh && OMNID_NOMIC_GGUF=<path> OMNID_BITNET_GGUF=<path> python3 -m pytest -q -p no:cacheprovider tests -k test_web_streams_sse",
+      "expect": "1 passed",
+      "evidence": [
+        "tests/test_omnid.py",
+        "TECHNICAL-DISCLOSURE.md"
+      ],
+      "runtime_s": 60,
+      "needs": [
+        "a built microsoft/BitNet (bitnet.cpp) tree with libllama",
+        "g++ C++17",
+        "your own nomic-embed-text v1.5 GGUF",
+        "python3",
+        "pytest",
+        "numpy"
+      ],
+      "cpu_flags": [],
+      "what_it_means": "A small upstream sends server-sent events slowly; the test checks that the first event reaches the client before the upstream finishes. Passing proves streaming is not buffered. It does not measure latency or many concurrent streams.",
+      "how_we_got_it": "tests/test_omnid.py::test_web_streams_sse with a purpose-written Python upstream; machine and date not recorded in the repo.",
+      "use_in_your_work": "Streaming model tokens or progress events from a local app through one front door.",
+      "honest_limits": "External; one stream, no load.",
+      "corrections": []
+    },
+    {
+      "id": "O6",
+      "title": "MCP face lists only tools whose back end runs, and embeds",
+      "claim": "`omnid mcp` is a stdio MCP server that lists only the tools whose back end is actually running; embed via MCP returns 768 dimensions; unknown tool returns an error",
+      "kind": "external",
+      "verify": "BITNET_DIR=$HOME/projects/bitnet ./build.sh && OMNID_NOMIC_GGUF=<path> OMNID_BITNET_GGUF=<path> python3 -m pytest -q -p no:cacheprovider tests -k test_mcp_face",
+      "expect": "1 passed",
+      "evidence": [
+        "tests/test_omnid.py",
+        "README.md"
+      ],
+      "runtime_s": 120,
+      "needs": [
+        "a built microsoft/BitNet (bitnet.cpp) tree with libllama",
+        "g++ C++17",
+        "your own nomic-embed-text v1.5 GGUF",
+        "python3",
+        "pytest",
+        "numpy"
+      ],
+      "cpu_flags": [],
+      "what_it_means": "The test speaks JSON-RPC to `omnid mcp`: initialize, tools/list, an embed call (dim 768) and a bad tool name (error). It checks the listed tools are a subset of the allowed set and always include fleet_exec, embed and ring_heads. Passing proves the MCP face is a working client entry for those tools. It does not show behaviour with real MCP clients beyond this scripted conversation.",
+      "how_we_got_it": "tests/test_omnid.py::test_mcp_face against a locally built omnid; machine and date not recorded in the repo.",
+      "use_in_your_work": "Give Claude Code, opencode or another MCP client local embeddings through one small server.",
+      "honest_limits": "External; optional workers (exec, heads, memory) are not in the repo, so those paths are skipped unless you run your own.",
+      "corrections": []
+    },
+    {
+      "id": "O7",
+      "title": "Honest negative: q8_0 quantisation of nomic was slower (0.78x) and less exact",
+      "claim": "q8_0 against f16 for this encoder on a 4-core laptop: slower (0.78x) and less exact (min cosine 0.9972); recorded, result file not in this repository",
+      "kind": "file",
+      "verify": "python3 -c \"t=open('TECHNICAL-DISCLOSURE.md',encoding='utf-8').read();S=['q8_0', '0.78', '0.9972', 'no published measurement'];m=[x for x in S if x not in t];[print('found',x) for x in S if x in t];assert not m,m\"",
+      "expect": "found q8_0; found 0.78; found 0.9972; found no published measurement",
+      "evidence": [
+        "TECHNICAL-DISCLOSURE.md",
+        "DOSSIER.md"
+      ],
+      "runtime_s": 1,
+      "needs": [
+        "python3"
+      ],
+      "cpu_flags": [],
+      "what_it_means": "The project's own record says quantising the embedding encoder to 8 bits made it slower and less accurate than 16-bit on a small laptop CPU, so the shipped path uses f16. Passing proves the disclosure states this together with its caveat. It does not reproduce the measurement: the raw result file is not in the repository and the disclosure marks it as having no published measurement.",
+      "how_we_got_it": "TECHNICAL-DISCLOSURE.md section 1 and DOSSIER.md Metrics: '4-core laptop CPU'. Exact CPU, date and harness are not recorded in the repo.",
+      "use_in_your_work": "Do not assume a smaller quantisation is faster for an embedding encoder on a CPU: measure speed and cosine against f16 on your hardware.",
+      "honest_limits": "Unverifiable from this repo; a lead for you to re-measure, not a proven result.",
+      "corrections": []
+    },
+    {
+      "id": "O8",
+      "title": "Hypervector wire: 100 % field decode on 4,506 real requests (measured elsewhere)",
+      "claim": "Measured on 4,506 distinct real tool requests: 100% field decode, 0 collisions (2,560-byte frame, harness experiments/harness/hv0.py in omni-ring v0.2.0)",
+      "kind": "file",
+      "verify": "python3 -c \"t=open('TECHNICAL-DISCLOSURE.md',encoding='utf-8').read();S=['4,506', '100% field decode', '0 collisions', '2,560-byte'];m=[x for x in S if x not in t];[print('found',x) for x in S if x in t];assert not m,m\"",
+      "expect": "found 4,506; found 100% field decode; found 0 collisions; found 2,560-byte",
+      "evidence": [
+        "TECHNICAL-DISCLOSURE.md",
+        "DOSSIER.md"
+      ],
+      "runtime_s": 1,
+      "needs": [
+        "python3"
+      ],
+      "cpu_flags": [],
+      "what_it_means": "The disclosure reports that a compact frame carrying a request's fields can be decoded back exactly for every one of 4,506 real tool requests with no collisions. Passing here proves only that the claim is recorded as stated. The harness and result file live in the separate omni-ring repository, not in omnid, so this repo cannot reproduce it; check that repository's hv0 result.",
+      "how_we_got_it": "Cited from the omni-ring repository v0.2.0 (experiments/harness/hv0.py, experiments/results/hv0.result.json) in TECHNICAL-DISCLOSURE.md section 3; date and machine are in that repository, not recorded here.",
+      "use_in_your_work": "A routing and deduplication key for requests that any node can compute without parsing.",
+      "honest_limits": "Not reproducible from this repo; omnid itself ships the wire as a design hook, and the designs in section 4 of the disclosure are 'designed, not measured'.",
+      "corrections": []
+    },
+    {
+      "id": "O9",
+      "title": "Licence and provenance: Apache-2.0, no models or third-party sources shipped",
+      "claim": "Apache-2.0; nlohmann/json 3.11.2 vendored under MIT; llama.cpp and cpp-httplib come from your own bitnet.cpp tree; model files are not shipped",
+      "kind": "file",
+      "verify": "python3 -c \"t=open('NOTICE',encoding='utf-8').read();S=['nlohmann/json 3.11.2 (MIT)', 'cpp-httplib (MIT)', 'Apache License'];m=[x for x in S if x not in t];[print('found',x) for x in S if x in t];assert not m,m\" && test -f third_party/nlohmann/json.hpp && ! ls | grep -qiE '\\.(gguf|onnx|bin)$' && echo 'no model files at repo root'",
+      "expect": "found nlohmann/json 3.11.2 (MIT); found cpp-httplib (MIT); no model files at repo root",
+      "evidence": [
+        "NOTICE",
+        "LICENSE",
+        "PROVENANCE.md",
+        "third_party/nlohmann/json.hpp"
+      ],
+      "runtime_s": 1,
+      "needs": [
+        "python3",
+        "bash"
+      ],
+      "cpu_flags": [],
+      "what_it_means": "Checks the notice names the two vendored/used MIT components, the JSON header is present, and no model weights sit at the repo root. Passing supports the claim that the repo is self-contained for what it ships and that you bring your own models. It is not a licence scan; PROVENANCE.md lists a ScanCode and gitleaks run on the exact export as a check still to run.",
+      "how_we_got_it": "NOTICE, PROVENANCE.md and the file listing, read on 2026-10-16.",
+      "use_in_your_work": "A quick check before you redistribute or embed omnid in your own project: what is vendored, what you must supply.",
+      "honest_limits": "The ScanCode and gitleaks results are not committed for omnid (unlike tarsus).",
+      "corrections": []
+    }
+  ]
+}

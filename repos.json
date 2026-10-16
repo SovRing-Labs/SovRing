@@ -1,0 +1,493 @@
+{
+ "org": "SovRing-Labs",
+ "umbrella": "https://github.com/SovRing-Labs/SovRing",
+ "generated": "2026-10-16",
+ "generator": "projects/repo-access/tools/gen-agents-md.py",
+ "about": {
+  "beginner": "SovRing-Labs is one person's open research lab building AI that runs on the computers people already own. Its core idea is the residue ring: numbers and memories stored as remainders on several small prime 'rings', which makes some arithmetic exact and order-independent and lets a memory be found by its address instead of by searching. The repositories are the engines (exact ring arithmetic, ring memory, a shared-memory vector core), the agent tooling that runs a fleet of AI coding agents safely and cheaply, a from-scratch web browser engine, and the research papers with the scripts that produced every number. Each repository has a quick test you can run in minutes, and each claim it makes has a test you can re-run.",
+  "intermediate": "Engines: armilla-astrolabe (carry-free residue-number-system arithmetic on CPUs: exact sums, sign/ReLU from the rings, an exact training step), omni-ring (vector-symbolic / hyperdimensional memory on rings with an AVX2 C kernel), vsa-core (shared-memory hypervector bus in C). Agents: talon (agent engine), tarsus (safety and tool-call repair), dock (one MCP front for many MCP servers), cost-savers (token reduction), agent-reliability-kit (routing, grounding, a done-gate), omnid (local embeddings and an MCP face). Browser: omni-render (rendering engine with integer layout and a JS runtime) and omni-ui (apps and a light browser on it). Research: omniring-research (the measured corpus, CC BY 4.0, with its harness). Licences: the engines and agent tools are PolyForm Small Business OR Noncommercial (free trial for evaluation); dock and omnid are Apache-2.0; the browser is MIT OR Apache-2.0; the corpus is CC BY 4.0.",
+  "advanced": "Every repository carries DOSSIER.md (history, metrics, limits), PROVENANCE.md (sources, clean-room notes), TECHNICAL-DISCLOSURE.md where it discloses a method as dated prior art, and CITATION.cff with a Zenodo DOI. Claims are tied to evidence files committed in the repo; suite.json lists each claim with its verify command, the expected output, what passing means, how the number was obtained and its honest limits. Corrections are logged and applied as errata in the research corpus. Start from llms.txt for raw links to all of these."
+ },
+ "repos": [
+  {
+   "repo": "armilla-astrolabe",
+   "group": "engine",
+   "lang": "Python",
+   "needs": [
+    "python3>=3.10",
+    "numpy",
+    "pytest"
+   ],
+   "deps": "",
+   "quicktest": "PYTHONPATH=engine python3 -m pytest -q engine/tests",
+   "expect": "9 passed",
+   "gui": "./install.sh   # self-test, then the console on http://127.0.0.1:8989",
+   "licence": "PolyForm Small Business 1.0.0 OR PolyForm Noncommercial 1.0.0 (free trial for evaluation)",
+   "pip": [
+    "numpy",
+    "pytest"
+   ],
+   "url": "https://github.com/SovRing-Labs/armilla-astrolabe",
+   "setup": "python3 -m venv .venv && . .venv/bin/activate && python -m pip install -q numpy pytest",
+   "run": ". .venv/bin/activate && PYTHONPATH=engine python3 -m pytest -q engine/tests",
+   "one_line": "Carry-free residue-number-system engine on ordinary CPUs: exact integer arithmetic on coprime prime rings, with a ternary pull engine, an exact training step and RNS modular exponentiation.",
+   "summary": "A number is held as its remainders on many small prime rings, like beads on rods that never pass a carry. On top of that sit three old ideas, rebuilt for today's processors: The outer rings precompute answers; the centre pulls them straight into SIMD; a check ring verifies every result.",
+   "doi": null,
+   "limits": "",
+   "tests_n": 8,
+   "quicktest_s": 9.8,
+   "census": {
+    "exit": 0,
+    "last": "9 passed in 6.58s",
+    "date": "2026-10-16"
+   },
+   "read_next": [
+    "https://raw.githubusercontent.com/SovRing-Labs/armilla-astrolabe/main/README.md",
+    "https://raw.githubusercontent.com/SovRing-Labs/armilla-astrolabe/main/TECHNICAL-DISCLOSURE.md",
+    "https://raw.githubusercontent.com/SovRing-Labs/armilla-astrolabe/main/PROVENANCE.md",
+    "https://raw.githubusercontent.com/SovRing-Labs/armilla-astrolabe/main/LICENSING.md",
+    "https://raw.githubusercontent.com/SovRing-Labs/armilla-astrolabe/main/CITATION.cff",
+    "https://raw.githubusercontent.com/SovRing-Labs/armilla-astrolabe/main/AGENTS.md",
+    "https://raw.githubusercontent.com/SovRing-Labs/armilla-astrolabe/main/STATUS.md",
+    "https://raw.githubusercontent.com/SovRing-Labs/armilla-astrolabe/main/suite.json"
+   ]
+  },
+  {
+   "repo": "omni-ring",
+   "group": "engine",
+   "lang": "Python + C (AVX2)",
+   "needs": [
+    "python3>=3.10",
+    "numpy",
+    "pytest",
+    "gcc",
+    "cpu:avx2"
+   ],
+   "deps": "",
+   "quicktest": "./build_kernel.sh && python3 -m pytest -q",
+   "expect": "passed",
+   "licence": "PolyForm Small Business 1.0.0 OR PolyForm Noncommercial 1.0.0 (free trial for evaluation)",
+   "pip": [
+    "numpy",
+    "pytest"
+   ],
+   "quicktest_note": "tests/test_ring_bank.py::test_ring_bank_cross_attention_scan is a speed bar (< 800 us per scan with the AVX2 kernel built); on a fresh clone at load 40 on 8 threads (2026-10-16) it measured 935 us and failed while the other 189 passed; on an idle machine not yet measured",
+   "url": "https://github.com/SovRing-Labs/omni-ring",
+   "setup": "python3 -m venv .venv && . .venv/bin/activate && python -m pip install -q numpy pytest",
+   "run": ". .venv/bin/activate && ./build_kernel.sh && python3 -m pytest -q",
+   "one_line": "Residue hyperdimensional computing engine: coprime-ring (CRT) memory with a check ring, resonator decode, two-faced ternary/phase hypervector slot, AVX2 C kernel, shards and a shared-memory bus.",
+   "summary": "`omni-ring` is a production-grade, zero-external-dependency (NumPy + standard library + AVX2 C-kernel) implementation of the OMNIRING Coprime Resonator Hyperdimensional Engine and the Two-Faced Polymorphic Bus with shared-memory (`/dev/shm`) IPC. Harnesses, result files and pre-registrations for Parts 3 and 4 are in [`experiments/`](experiments/). Parts 5–7 are in the research corpus ([omniring-research](https://github.com/SovRing-Labs/omniring-research), `docs/disclosures/`). Changes in this release: [`CHANGELOG.md`](CHANGELOG.md).",
+   "doi": "10.5281/zenodo.23282029",
+   "limits": "A cue is mandatory for resonance; unguided decoding is seed-dependent and abstains when it fails. Resonant capacity ≈ 12 marks per slot at one cue (the exhaustive sift reads more). Superposition is finite: triangle buckets are safe to 256 facts; beyond that, truth must live in exact rows. Exact multi-hop lookups are ~250x faster in an indexed database (Part 2 §9).",
+   "tests_n": 12,
+   "quicktest_s": 233.8,
+   "census": {
+    "exit": 1,
+    "last": "1 failed, 189 passed, 5 skipped in 214.90s (0:03:34)",
+    "date": "2026-10-16"
+   },
+   "read_next": [
+    "https://raw.githubusercontent.com/SovRing-Labs/omni-ring/main/README.md",
+    "https://raw.githubusercontent.com/SovRing-Labs/omni-ring/main/DOSSIER.md",
+    "https://raw.githubusercontent.com/SovRing-Labs/omni-ring/main/TECHNICAL-DISCLOSURE.md",
+    "https://raw.githubusercontent.com/SovRing-Labs/omni-ring/main/PROVENANCE.md",
+    "https://raw.githubusercontent.com/SovRing-Labs/omni-ring/main/LICENSING.md",
+    "https://raw.githubusercontent.com/SovRing-Labs/omni-ring/main/CITATION.cff",
+    "https://raw.githubusercontent.com/SovRing-Labs/omni-ring/main/AGENTS.md",
+    "https://raw.githubusercontent.com/SovRing-Labs/omni-ring/main/STATUS.md",
+    "https://raw.githubusercontent.com/SovRing-Labs/omni-ring/main/suite.json"
+   ]
+  },
+  {
+   "repo": "vsa-core",
+   "group": "engine",
+   "lang": "C",
+   "needs": [
+    "gcc",
+    "make",
+    "python3>=3.10",
+    "numpy",
+    "cpu:avx2"
+   ],
+   "deps": "",
+   "quicktest": "make -s && python3 xlang_test.py",
+   "expect": "PASS",
+   "quicktest_note": "the quick test builds everything and runs the Python-C layout gate on a private shared-memory segment; never run `make check` on a machine with a live /dev/shm/vsa_matrix_bus (it zeroes it)",
+   "licence": "PolyForm Small Business 1.0.0 OR PolyForm Noncommercial 1.0.0 (free trial for evaluation)",
+   "full_test": "make test   # adds the statistical trust / bus / phase / bundle panels: over 10 minutes on a loaded 4-core laptop; the float phase path prints KILL on its 1.25 us speed bar by design (SEALED-METRIC Amendment A)",
+   "pip": [
+    "numpy"
+   ],
+   "url": "https://github.com/SovRing-Labs/vsa-core",
+   "setup": "python3 -m venv .venv && . .venv/bin/activate && python -m pip install -q numpy",
+   "run": ". .venv/bin/activate && make -s && python3 xlang_test.py",
+   "one_line": "Ternary vector-symbolic kernel (10,240-dim, two bitplanes) and a POSIX shared-memory blackboard with a seqlock, AVX2 SIMD, phase kernel and trust classifier; C/C++ with a Python client.",
+   "summary": "Ternary Vector Symbolic Architecture kernel and shared-memory blackboard for the sovereign fleet. C/C++ with a POSIX `/dev/shm` bus, AVX2 SIMD, no external deps. A blackboard where 10 lanes (4 control heads + 6 workers) coordinate through a shared hypervector matrix rather than message passing. Each hypervector is 10,240 ternary dimensions `{-1, 0, +1}` stored as two bitplanes.",
+   "doi": "10.5281/zenodo.23282124",
+   "limits": "\"Sub-nanosecond binding\" was false (~35 ns). \"67M ops/s\" came from a degenerate benchmark. \"Zero-token telemetry\" is not how language models consume vectors — a projection head feeding a few slots is. Not built in 0.1.0: semantic search or routing over the bus; timing of a single published-slot read. The bus is single-machine shared memory; multi-machine use goes through omni-ring shards (Speculative at scale).",
+   "tests_n": 6,
+   "quicktest_s": 41.5,
+   "census": {
+    "exit": 0,
+    "last": "XLANG-TEST PASS",
+    "date": "2026-10-16"
+   },
+   "read_next": [
+    "https://raw.githubusercontent.com/SovRing-Labs/vsa-core/main/README.md",
+    "https://raw.githubusercontent.com/SovRing-Labs/vsa-core/main/DOSSIER.md",
+    "https://raw.githubusercontent.com/SovRing-Labs/vsa-core/main/TECHNICAL-DISCLOSURE.md",
+    "https://raw.githubusercontent.com/SovRing-Labs/vsa-core/main/PROVENANCE.md",
+    "https://raw.githubusercontent.com/SovRing-Labs/vsa-core/main/LICENSING.md",
+    "https://raw.githubusercontent.com/SovRing-Labs/vsa-core/main/CITATION.cff",
+    "https://raw.githubusercontent.com/SovRing-Labs/vsa-core/main/AGENTS.md",
+    "https://raw.githubusercontent.com/SovRing-Labs/vsa-core/main/STATUS.md",
+    "https://raw.githubusercontent.com/SovRing-Labs/vsa-core/main/suite.json"
+   ]
+  },
+  {
+   "repo": "omniring-research",
+   "group": "research",
+   "lang": "Markdown + Python harness",
+   "needs": [
+    "python3>=3.10",
+    "numpy"
+   ],
+   "deps": "",
+   "quicktest": "python3 harness/ring1/run_halo.py --quick",
+   "expect": "VERDICT:",
+   "licence": "CC BY 4.0",
+   "pip": [
+    "numpy"
+   ],
+   "quicktest_note": "the --quick smoke run re-runs the RING-1 halo harness at reduced size and prints its pre-registered criterion and a VERDICT line (about 20 s); the decisive run is the same command without --quick",
+   "url": "https://github.com/SovRing-Labs/omniring-research",
+   "setup": "python3 -m venv .venv && . .venv/bin/activate && python -m pip install -q numpy",
+   "run": ". .venv/bin/activate && python3 harness/ring1/run_halo.py --quick",
+   "one_line": "Public research corpus of the OMNIRING project: numbered disclosure chapters, pre-registered ring-resonator experiments (PASS and KILL both published) with their numpy harnesses and run logs, and a status disclosure that marks each later result Measured or NOT YET TESTED.",
+   "summary": "The research record behind OMNIRING, a memory that stores small structured records (\"marks\") in fixed-size high-dimensional vectors and reads them back by resonance. Its parts: These documents are the experiments and reviews that shaped the design. Most are pre-registered experiments: the pass/fail rule was written before any trial ran, and each document reports it word for word next to the result. Negative results (KILL) are published alongside positive ones.",
+   "doi": "10.5281/zenodo.23354784",
+   "limits": "",
+   "tests_n": 17,
+   "quicktest_s": 121.5,
+   "census": {
+    "exit": 0,
+    "last": "VERDICT: KILL: the halo buys nothing. At M=32 Arm B's Wilson-99% lower bound (20.9%) does not exceed Arm A's point recall (33.3%), and Arm B does not match Arm A at half the iterations (medIt_B 5.0 vs medIt_A 2.0).",
+    "date": "2026-10-16"
+   },
+   "read_next": [
+    "https://raw.githubusercontent.com/SovRing-Labs/omniring-research/main/README.md",
+    "https://raw.githubusercontent.com/SovRing-Labs/omniring-research/main/CITATION.cff",
+    "https://raw.githubusercontent.com/SovRing-Labs/omniring-research/main/AGENTS.md",
+    "https://raw.githubusercontent.com/SovRing-Labs/omniring-research/main/STATUS.md",
+    "https://raw.githubusercontent.com/SovRing-Labs/omniring-research/main/suite.json"
+   ]
+  },
+  {
+   "repo": "tarsus",
+   "group": "agents",
+   "lang": "Python + Node",
+   "needs": [
+    "python3>=3.10"
+   ],
+   "deps": "",
+   "quicktest": "python3 bin/omnitool_guard.py selftest",
+   "expect": "OMNITOOL-GUARD SELFTEST: PASS (62/62)",
+   "full_test": "make test   # also needs pytest, node; the MCP server test needs `cd mcp && npm install`",
+   "licence": "PolyForm Small Business 1.0.0 OR PolyForm Noncommercial 1.0.0 (free trial for evaluation)",
+   "url": "https://github.com/SovRing-Labs/tarsus",
+   "setup": "",
+   "run": "python3 bin/omnitool_guard.py selftest",
+   "one_line": "Safe hands for tool-calling agents: batch tool execution with payload repair, a deterministic safety guard, kernel (Landlock) write confinement, human-only approval, audit trail and an MCP server. Linux only.",
+   "summary": "Tarsus (formerly *omnitool*) is the \"hands\" of an agent: one call carries a JSON batch of operations (`bash`, `read`, `write`, `patch`, `sql`, `glob`, `grep`, `fix_json`), which is repaired, validated, safety-checked and executed in parallel, sequentially or in dependency order, and answered with one structured result per operation. It is built for small, local, tool-calling models that routinely emit malformed payloads: it repairs what it can, refuses what it cannot, never runs half a batch its guard rejected — and since 0.2.0 the kernel itself confines what a bash command can write, and …",
+   "doi": "10.5281/zenodo.23282013",
+   "limits": "Preflight: an `operations` value that is a JSON *string* of an array is split into one-character bash ops; a top-level Python-dict string is rejected. The C++ interceptor's inference is not implemented; it answers with an explicit error by design. The advisory classifier does not discriminate destructive commands; it is advisory only.",
+   "tests_n": 11,
+   "quicktest_s": 0.4,
+   "census": {
+    "exit": 0,
+    "last": "OMNITOOL-GUARD SELFTEST: PASS (62/62)",
+    "date": "2026-10-16"
+   },
+   "read_next": [
+    "https://raw.githubusercontent.com/SovRing-Labs/tarsus/main/README.md",
+    "https://raw.githubusercontent.com/SovRing-Labs/tarsus/main/DOSSIER.md",
+    "https://raw.githubusercontent.com/SovRing-Labs/tarsus/main/TECHNICAL-DISCLOSURE.md",
+    "https://raw.githubusercontent.com/SovRing-Labs/tarsus/main/PROVENANCE.md",
+    "https://raw.githubusercontent.com/SovRing-Labs/tarsus/main/LICENSING.md",
+    "https://raw.githubusercontent.com/SovRing-Labs/tarsus/main/CITATION.cff",
+    "https://raw.githubusercontent.com/SovRing-Labs/tarsus/main/AGENTS.md",
+    "https://raw.githubusercontent.com/SovRing-Labs/tarsus/main/STATUS.md",
+    "https://raw.githubusercontent.com/SovRing-Labs/tarsus/main/suite.json"
+   ]
+  },
+  {
+   "repo": "talon",
+   "group": "agents",
+   "lang": "Python",
+   "needs": [
+    "python3>=3.10",
+    "pytest",
+    "pyte"
+   ],
+   "deps": "",
+   "quicktest": "make test",
+   "expect": "All Talon release tests PASSED.",
+   "licence": "PolyForm Small Business 1.0.0 OR PolyForm Noncommercial 1.0.0 (free trial for evaluation)",
+   "pip": [
+    "pytest",
+    "pyte"
+   ],
+   "url": "https://github.com/SovRing-Labs/talon",
+   "setup": "python3 -m venv .venv && . .venv/bin/activate && python -m pip install -q pytest pyte",
+   "run": ". .venv/bin/activate && make test",
+   "one_line": "Standalone agent runtime and role-shell terminal: talon run/serve, multi-provider lanes, tool loop, session store.",
+   "summary": "`talon` is a standalone, lightweight agent execution engine and role-shell runtime developed for the Sovereign Raptor fleet. It provides: 1. The Talon Engine: An autonomous agent loop featuring multi-provider endpoint routing (direct HTTP/vLLM endpoints, local Ollama, OpenRouter, Groq), tool execution through standard JSON protocols (such as Omnitool or built-in tool handlers), turn-level message compaction, and persistent session storage. 2. The Role Shell: Specialized interactive terminal shells configured per agent role (`commander`, `builder`, `dev`, `oracle`, `researcher`, `grunt`, …",
+   "doi": "10.5281/zenodo.23282041",
+   "limits": "Commander role plugins (fleet status, dispatcher queries) are not in 0.1.0; they read the original fleet's databases. Role prompts and tools are read from an OpenCode-style config; without one, roles fall back to defaults. No offline mode by design.",
+   "tests_n": 10,
+   "quicktest_s": 45.2,
+   "census": {
+    "exit": 0,
+    "last": "All Talon release tests PASSED.",
+    "date": "2026-10-16"
+   },
+   "read_next": [
+    "https://raw.githubusercontent.com/SovRing-Labs/talon/main/README.md",
+    "https://raw.githubusercontent.com/SovRing-Labs/talon/main/DOSSIER.md",
+    "https://raw.githubusercontent.com/SovRing-Labs/talon/main/TECHNICAL-DISCLOSURE.md",
+    "https://raw.githubusercontent.com/SovRing-Labs/talon/main/PROVENANCE.md",
+    "https://raw.githubusercontent.com/SovRing-Labs/talon/main/LICENSING.md",
+    "https://raw.githubusercontent.com/SovRing-Labs/talon/main/CITATION.cff",
+    "https://raw.githubusercontent.com/SovRing-Labs/talon/main/AGENTS.md",
+    "https://raw.githubusercontent.com/SovRing-Labs/talon/main/STATUS.md",
+    "https://raw.githubusercontent.com/SovRing-Labs/talon/main/suite.json"
+   ]
+  },
+  {
+   "repo": "agent-reliability-kit",
+   "group": "agents",
+   "lang": "Python + Rust",
+   "needs": [
+    "python3>=3.10",
+    "pytest",
+    "cargo"
+   ],
+   "deps": "",
+   "quicktest": "PYTHONPATH=.:bin python3 -m pytest -q tests/",
+   "expect": "14 passed",
+   "full_test": "make test   # also builds and tests rust-done-gate (cargo, offline)",
+   "licence": "PolyForm Small Business 1.0.0 OR PolyForm Noncommercial 1.0.0 (free trial for evaluation)",
+   "pip": [
+    "pytest"
+   ],
+   "quicktest_note": "the Python tests also build and run the Rust done-gate, so a Rust toolchain is needed (rustup default stable); on a fresh HOME without one, 11 tests error (census 2026-10-16)",
+   "url": "https://github.com/SovRing-Labs/agent-reliability-kit",
+   "setup": "python3 -m venv .venv && . .venv/bin/activate && python -m pip install -q pytest",
+   "run": ". .venv/bin/activate && PYTHONPATH=.:bin python3 -m pytest -q tests/",
+   "one_line": "Deterministic dispatch routing, a Rust done-gate that demands physical proof of completion, and research grounding for agent briefs.",
+   "summary": "`agent-reliability-kit` provides the essential operational infrastructure required to run autonomous AI agent dispatches reliably on heterogeneous local and cloud models. In unconstrained multi-agent deployments, tasks frequently fail due to three failure modes: 1. Misrouted Dispatches: Simple keyword guesses route research tasks to fast code-generation models, or dispatch work to dead/flaky provider lanes. 2. Hallucinated Research: Research agents write convincing reports citing fictitious file paths or non-existent documentation. 3. Premature Task Completion: Agents claim success in …",
+   "doi": "10.5281/zenodo.23282152",
+   "limits": "`done-gate --selftest` contains cases tied to the original fleet (a `bin/done-gate` path, a local service port) and is not meaningful outside it; the behavioural tests replace it. The gate shells out to `sqlite3`; SQL inputs are task ids, quoted but not parameterised. Router thresholds (4 attempts, 24 h) are fixed constants.",
+   "tests_n": 6,
+   "quicktest_s": 10.0,
+   "census": {
+    "exit": 0,
+    "last": "14 passed in 7.75s",
+    "date": "2026-10-16"
+   },
+   "read_next": [
+    "https://raw.githubusercontent.com/SovRing-Labs/agent-reliability-kit/main/README.md",
+    "https://raw.githubusercontent.com/SovRing-Labs/agent-reliability-kit/main/DOSSIER.md",
+    "https://raw.githubusercontent.com/SovRing-Labs/agent-reliability-kit/main/TECHNICAL-DISCLOSURE.md",
+    "https://raw.githubusercontent.com/SovRing-Labs/agent-reliability-kit/main/PROVENANCE.md",
+    "https://raw.githubusercontent.com/SovRing-Labs/agent-reliability-kit/main/LICENSING.md",
+    "https://raw.githubusercontent.com/SovRing-Labs/agent-reliability-kit/main/CITATION.cff",
+    "https://raw.githubusercontent.com/SovRing-Labs/agent-reliability-kit/main/AGENTS.md",
+    "https://raw.githubusercontent.com/SovRing-Labs/agent-reliability-kit/main/STATUS.md",
+    "https://raw.githubusercontent.com/SovRing-Labs/agent-reliability-kit/main/suite.json"
+   ]
+  },
+  {
+   "repo": "cost-savers",
+   "group": "agents",
+   "lang": "TypeScript (Node) + Python",
+   "needs": [
+    "node>=22.6",
+    "python3>=3.10"
+   ],
+   "deps": "",
+   "quicktest": "make test",
+   "expect": "All cost-savers tests PASSED.",
+   "quicktest_note": "needs Node 22.6+ (--experimental-strip-types); the census laptop has Node 18.19, where `make test` stops at \"node: bad option\" — on Node 22.6+ not yet measured here; on older Node only `python3 tests/test_fleet_token_baseline.py` runs",
+   "licence": "PolyForm Small Business 1.0.0 OR PolyForm Noncommercial 1.0.0 (free trial for evaluation)",
+   "url": "https://github.com/SovRing-Labs/cost-savers",
+   "setup": "",
+   "run": "make test",
+   "one_line": "Six OpenCode plugins and four CLI tools that cut what coding agents send to paid models, with a pre-registered paired A/B.",
+   "summary": "`cost-savers` is the production token-reduction and cost-control layer developed for the Sovereign Raptor agent fleet. As autonomous agents operate over long sessions (50+ turns), uncurated context accumulation rapidly consumes model context windows, inflates per-turn inference costs, degrades attention accuracy, and leaks sensitive local file system paths or credentials to cloud providers. This package provides a modular set of agent harness plugins (compatible with the OpenCode plugin architecture) and supporting CLI tools:",
+   "doi": "10.5281/zenodo.23282133",
+   "limits": "The A/B covers short, read-only sessions on one free model; long sessions and other providers are untested. `cloud-pacer` deliberately slows requests. Plugins target OpenCode's plugin hooks; other agent runners need adapters.",
+   "tests_n": 9,
+   "quicktest_s": 0.2,
+   "census": {
+    "exit": 2,
+    "last": "make: *** [Makefile:4: test] Error 9",
+    "date": "2026-10-16"
+   },
+   "read_next": [
+    "https://raw.githubusercontent.com/SovRing-Labs/cost-savers/main/README.md",
+    "https://raw.githubusercontent.com/SovRing-Labs/cost-savers/main/DOSSIER.md",
+    "https://raw.githubusercontent.com/SovRing-Labs/cost-savers/main/TECHNICAL-DISCLOSURE.md",
+    "https://raw.githubusercontent.com/SovRing-Labs/cost-savers/main/PROVENANCE.md",
+    "https://raw.githubusercontent.com/SovRing-Labs/cost-savers/main/LICENSING.md",
+    "https://raw.githubusercontent.com/SovRing-Labs/cost-savers/main/CITATION.cff",
+    "https://raw.githubusercontent.com/SovRing-Labs/cost-savers/main/AGENTS.md",
+    "https://raw.githubusercontent.com/SovRing-Labs/cost-savers/main/STATUS.md",
+    "https://raw.githubusercontent.com/SovRing-Labs/cost-savers/main/suite.json"
+   ]
+  },
+  {
+   "repo": "dock",
+   "group": "agents",
+   "lang": "JavaScript (Node)",
+   "needs": [
+    "node>=18"
+   ],
+   "deps": "",
+   "quicktest": "npm test",
+   "expect": "# fail 0",
+   "quicktest_note": "package.json asks for Node 22+; the test suite also passed on Node 18.19 (census 2026-10-16)",
+   "licence": "Apache-2.0",
+   "url": "https://github.com/SovRing-Labs/dock",
+   "setup": "",
+   "run": "npm test",
+   "one_line": "One MCP server for any number of MCP servers: clients see two tools (search_tools, call_tool) at a constant token cost, and tool search abstains when nothing is relevant. Zero dependencies.",
+   "summary": "One MCP server for any number of MCP servers. Clients pay a constant context cost no matter how many are docked. Dock ten upstream servers. Your model still sees two tools.",
+   "doi": "10.5281/zenodo.23282779",
+   "limits": "Lexical search only; no semantic matching. Not measured: catalogs above 30 tools, `search_tools` latency, clients other than opencode.",
+   "tests_n": 7,
+   "quicktest_s": 18.6,
+   "census": {
+    "exit": 0,
+    "last": "# fail 0",
+    "date": "2026-10-16"
+   },
+   "read_next": [
+    "https://raw.githubusercontent.com/SovRing-Labs/dock/main/README.md",
+    "https://raw.githubusercontent.com/SovRing-Labs/dock/main/DOSSIER.md",
+    "https://raw.githubusercontent.com/SovRing-Labs/dock/main/TECHNICAL-DISCLOSURE.md",
+    "https://raw.githubusercontent.com/SovRing-Labs/dock/main/PROVENANCE.md",
+    "https://raw.githubusercontent.com/SovRing-Labs/dock/main/LICENSING.md",
+    "https://raw.githubusercontent.com/SovRing-Labs/dock/main/CITATION.cff",
+    "https://raw.githubusercontent.com/SovRing-Labs/dock/main/AGENTS.md",
+    "https://raw.githubusercontent.com/SovRing-Labs/dock/main/STATUS.md",
+    "https://raw.githubusercontent.com/SovRing-Labs/dock/main/suite.json"
+   ]
+  },
+  {
+   "repo": "omnid",
+   "group": "agents",
+   "lang": "C++",
+   "one_line": "One small C++ server for local embeddings (nomic-embed-text v1.5 and BitNet-embedding-270M on llama.cpp), a hardened local web face and an MCP face. Models and the bitnet.cpp tree are not shipped.",
+   "needs": [
+    "g++",
+    "bitnet.cpp build (libllama)",
+    "embedding models",
+    "python3>=3.10",
+    "numpy",
+    "pytest"
+   ],
+   "deps": "",
+   "quicktest": "BITNET_DIR=~/projects/bitnet ./build.sh && python3 -m pytest -q tests",
+   "expect": "0 failed",
+   "quicktest_note": "needs a built microsoft/BitNet tree and the nomic-embed / BitNet-embedding models first (README § Build); not a 5-minute test",
+   "licence": "Apache-2.0",
+   "pip": [
+    "numpy",
+    "pytest"
+   ],
+   "url": "https://github.com/SovRing-Labs/omnid",
+   "setup": "python3 -m venv .venv && . .venv/bin/activate && python -m pip install -q numpy pytest",
+   "run": ". .venv/bin/activate && BITNET_DIR=~/projects/bitnet ./build.sh && python3 -m pytest -q tests",
+   "summary": "omnid is one small C++ binary that gives local agents, tools and web apps a single front door: Protocol: newline-delimited JSON on `OMNID_SOCK` (default `/tmp/omnid.sock`), many requests per connection.",
+   "doi": "10.5281/zenodo.23282761",
+   "limits": "Neither the bitnet.cpp tree nor any model is shipped. The memory-search, reasoning and event workers are not in this repository; without them those ops are unavailable. Web-face behaviour under load is not measured.",
+   "tests_n": 9,
+   "read_next": [
+    "https://raw.githubusercontent.com/SovRing-Labs/omnid/main/README.md",
+    "https://raw.githubusercontent.com/SovRing-Labs/omnid/main/DOSSIER.md",
+    "https://raw.githubusercontent.com/SovRing-Labs/omnid/main/TECHNICAL-DISCLOSURE.md",
+    "https://raw.githubusercontent.com/SovRing-Labs/omnid/main/PROVENANCE.md",
+    "https://raw.githubusercontent.com/SovRing-Labs/omnid/main/CITATION.cff",
+    "https://raw.githubusercontent.com/SovRing-Labs/omnid/main/AGENTS.md",
+    "https://raw.githubusercontent.com/SovRing-Labs/omnid/main/STATUS.md",
+    "https://raw.githubusercontent.com/SovRing-Labs/omnid/main/suite.json"
+   ]
+  },
+  {
+   "repo": "omni-render",
+   "group": "browser",
+   "lang": "Rust",
+   "needs": [
+    "cargo"
+   ],
+   "deps": "",
+   "quicktest": "cargo test --release",
+   "expect": "test result: ok",
+   "quicktest_note": "a full Rust release build first (several minutes of CPU)",
+   "licence": "MIT OR Apache-2.0 (renderer); doctor and T25 core PolyForm Small Business OR Noncommercial",
+   "url": "https://github.com/SovRing-Labs/omni-render",
+   "setup": "",
+   "run": "cargo test --release",
+   "one_line": "Our own web rendering engine in Rust: packed DOM, own CSS engine, integer layout, 2-bit raster, a program runtime that emits x86, a JavaScript interpreter on its own IR, and a self-repair core for layout.",
+   "summary": "A web rendering engine for the computers people already own: speed across the whole experience, small memory, safety and privacy. Packed DOM (16 bytes per node, 3.9x less RAM than an `Rc` DOM over html5ever on the bench corpus), own CSS engine, integer fixed-point layout (1/64 px), 2-bit glyph masks, a JavaScript runtime that compiles to its own IR, and a self-repair (\"doctor\") core for layout. Licence: MIT OR Apache-2.0 for the renderer; the doctor and T25 core are PolyForm Small Business 1.0.0 OR PolyForm Noncommercial 1.0.0 and are built only with `--features t25` (`LICENSING.md`). …",
+   "doi": "10.5281/zenodo.23282731",
+   "limits": "Three fault-localisation probes failed their bars (doc 35); the reader reads Rust and JavaScript only. Pristine fixes move boxes away from Chrome where Chrome draws the same defect. Script-heavy pages are not light (Omni Web census, doc 33).",
+   "tests_n": 13,
+   "read_next": [
+    "https://raw.githubusercontent.com/SovRing-Labs/omni-render/main/README.md",
+    "https://raw.githubusercontent.com/SovRing-Labs/omni-render/main/DOSSIER.md",
+    "https://raw.githubusercontent.com/SovRing-Labs/omni-render/main/TECHNICAL-DISCLOSURE.md",
+    "https://raw.githubusercontent.com/SovRing-Labs/omni-render/main/PROVENANCE.md",
+    "https://raw.githubusercontent.com/SovRing-Labs/omni-render/main/LICENSING.md",
+    "https://raw.githubusercontent.com/SovRing-Labs/omni-render/main/CITATION.cff",
+    "https://raw.githubusercontent.com/SovRing-Labs/omni-render/main/AGENTS.md",
+    "https://raw.githubusercontent.com/SovRing-Labs/omni-render/main/STATUS.md",
+    "https://raw.githubusercontent.com/SovRing-Labs/omni-render/main/suite.json"
+   ]
+  },
+  {
+   "repo": "omni-ui",
+   "group": "browser",
+   "lang": "Rust",
+   "needs": [
+    "cargo",
+    "omni-render checkout beside it"
+   ],
+   "deps": "git clone --depth 1 https://github.com/SovRing-Labs/omni-render ../omni-render && tools/pin-engine.sh $(git -C ../omni-render rev-parse HEAD)",
+   "quicktest": "cargo build --release && python3 tests/verify_calendar.py",
+   "expect": "exit 0",
+   "quicktest_note": "pins the omni-render engine source first, then a full Rust release build (several minutes of CPU)",
+   "licence": "MIT OR Apache-2.0 (omni-ui-t25 binary PolyForm)",
+   "url": "https://github.com/SovRing-Labs/omni-ui",
+   "setup": "git clone --depth 1 https://github.com/SovRing-Labs/omni-render ../omni-render && tools/pin-engine.sh $(git -C ../omni-render rev-parse HEAD)",
+   "run": "cargo build --release && python3 tests/verify_calendar.py",
+   "one_line": "Native apps and a light-use web browser (Omni Web) drawn by the omni-render engine: one packed widget tree is both drawn and read by assistive technology, and a broker plus one confined process per page.",
+   "summary": "Native apps and a light-use web browser drawn by the omni-render engine. One packed widget tree (22 bytes per widget) emits both the markup the engine draws and an accessibility tree for assistive technology, and every input ends in one `act(verb, arg, source)` call, so what is drawn and what is read cannot disagree. Licence: MIT OR Apache-2.0 (the separate `omni-ui-t25` binary is PolyForm; `LICENSING.md`). Disclosure: dated prior art, `TECHNICAL-DISCLOSURE.md`. Check out omni-render beside this repository, then: Apps are chosen on the command line (`omni-ui run calendar file.ics`, `run …",
+   "doi": "10.5281/zenodo.23282746",
+   "limits": "Not light on script-heavy pages (up to 2.23 GB on a video site). Transforms and keyframes (compositor) not built; plug-ins, developer tools, the tracker head designed only. No screen-reader session and no daily-use test recorded.",
+   "tests_n": 11,
+   "read_next": [
+    "https://raw.githubusercontent.com/SovRing-Labs/omni-ui/main/README.md",
+    "https://raw.githubusercontent.com/SovRing-Labs/omni-ui/main/DOSSIER.md",
+    "https://raw.githubusercontent.com/SovRing-Labs/omni-ui/main/TECHNICAL-DISCLOSURE.md",
+    "https://raw.githubusercontent.com/SovRing-Labs/omni-ui/main/PROVENANCE.md",
+    "https://raw.githubusercontent.com/SovRing-Labs/omni-ui/main/LICENSING.md",
+    "https://raw.githubusercontent.com/SovRing-Labs/omni-ui/main/CITATION.cff",
+    "https://raw.githubusercontent.com/SovRing-Labs/omni-ui/main/AGENTS.md",
+    "https://raw.githubusercontent.com/SovRing-Labs/omni-ui/main/STATUS.md",
+    "https://raw.githubusercontent.com/SovRing-Labs/omni-ui/main/suite.json"
+   ]
+  }
+ ]
+}

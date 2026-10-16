@@ -1,0 +1,49 @@
+{
+  "_about": "sovring MCP server: copy the block for your client. Replace /home/you with your home directory (clients do not expand ~ or $HOME in args); the server is .mcp/server.py inside your clone of https://github.com/SovRing-Labs/SovRing. Needs only python3 (3.8+) and git. Clones land in SOVRING_HOME.",
+  "claude_code": {
+    "_how": "one command: claude mcp add sovring -e SOVRING_HOME=$HOME/sovring -- python3 $HOME/sovring/SovRing/.mcp/server.py   — or put the block below in .mcp.json at your project root",
+    "mcpServers": {
+      "sovring": {
+        "type": "stdio",
+        "command": "python3",
+        "args": ["/home/you/sovring/SovRing/.mcp/server.py"],
+        "env": {"SOVRING_HOME": "/home/you/sovring"}
+      }
+    }
+  },
+  "cursor": {
+    "_how": "~/.cursor/mcp.json (all projects) or .cursor/mcp.json (one project)",
+    "mcpServers": {
+      "sovring": {
+        "command": "python3",
+        "args": ["/home/you/sovring/SovRing/.mcp/server.py"],
+        "env": {"SOVRING_HOME": "/home/you/sovring"}
+      }
+    }
+  },
+  "opencode": {
+    "_how": "opencode.json (project) or ~/.config/opencode/opencode.json, key \"mcp\"",
+    "mcp": {
+      "sovring": {
+        "type": "local",
+        "command": ["python3", "/home/you/sovring/SovRing/.mcp/server.py"],
+        "environment": {"SOVRING_HOME": "/home/you/sovring"},
+        "enabled": true
+      }
+    }
+  },
+  "claude_desktop": {
+    "_how": "claude_desktop_config.json (Settings → Developer → Edit Config); use absolute paths",
+    "mcpServers": {
+      "sovring": {
+        "command": "python3",
+        "args": ["/home/you/sovring/SovRing/.mcp/server.py"],
+        "env": {"SOVRING_HOME": "/home/you/sovring"}
+      }
+    }
+  },
+  "zero_install": {
+    "_how": "no clone, read-only docs (no tests run): add this remote MCP URL in any client that supports remote MCP servers",
+    "url": "https://gitmcp.io/SovRing-Labs/SovRing"
+  }
+}

@@ -1,0 +1,430 @@
+{
+  "_about": {
+    "repo": "omniring-research",
+    "url": "https://github.com/SovRing-Labs/omniring-research",
+    "one_line": "Public research corpus of the OMNIRING project: numbered disclosure chapters, pre-registered ring-resonator experiments (PASS and KILL both published) with their numpy harnesses and run logs, and a status disclosure that marks each later result Measured or NOT YET TESTED.",
+    "quicktest": "python3 harness/ring1/ring1_core.py --selftest",
+    "quicktest_s": 10,
+    "licence": "Documents: CC BY 4.0 (LICENSE.md). Harness: PolyForm Small Business 1.0.0 / PolyForm Noncommercial 1.0.0 (harness/LICENSE.md).",
+    "doi": "10.5281/zenodo.23354784",
+    "status_file": "STATUS.md",
+    "generated": "2026-10-16",
+    "schema": 1,
+    "source": "harness/README.md, MANIFEST.md, docs/01-06, 09, 10, 31, 33, 45, docs/appendix run logs; corrections from _Reviews/CORRECTIONS-LEDGER.md (C01 applied to R1, ids C03 not applied here). The repo has no STATUS.md at this commit: docs/45-status-disclosure-2026-10-14.md is its status record."
+  },
+  "tests": [
+    {
+      "id": "R1",
+      "title": "RING-1 core: clamping selects the cued mark out of a crowded slot (PASS)",
+      "section": "docs/01-ring1-core-cued-recall-and-capacity.md § The decision",
+      "claim": "At M = 12 marks per slot, c = 1 clamp, float phases, target recall has a Wilson-99% lower bound of 58.0%, above 2/M = 16.7% (twice chance): VERDICT PASS",
+      "kind": "run",
+      "verify": "T=$(mktemp -d) && trap 'rm -rf $T' EXIT && cp -r harness docs $T/ && (cd $T && python3 harness/ring1/run_core.py > out.txt 2>&1; true) && grep -qF 'VERDICT: PASS: clamping selects the cued mark out of a crowded slot (M=12, c=1, float, wilson-99 lower 58.0% > 2/M 16.7%)' $T/out.txt && echo 'OK: VERDICT: PASS: clamping selects the cued mark out of a crowded slot (M=12, c=1, float, wilson-99 lower 58.0% > 2/M 16.7%)'",
+      "expect": "VERDICT: PASS: clamping selects the cued mark out of a crowded slot (M=12, c=1, float, wilson-99 lower 58.0% > 2/M 16.7%)",
+      "evidence": [
+        "docs/appendix/RING1-CORE.run.txt",
+        "docs/01-ring1-core-cued-recall-and-capacity.md",
+        "harness/ring1/run_core.py"
+      ],
+      "runtime_s": 60,
+      "needs": [
+        "python3 3.12",
+        "numpy 2.5.3"
+      ],
+      "what_it_means": "A single hypervector slot of D = 5120 phases holds a crowd of marks, each written as a product of unit-phase vectors on four coprime rings (3, 5, 7, 13: 1,365 addressable states). A resonator settles on one mark when you clamp one ring (the cue) to a known value. Passing means: with 12 marks in the slot and one ring clamped, the cued mark comes back far above chance, and the lower end of a 99 percent Wilson interval (58.0 percent) clears the pre-registered bar of twice chance (16.7 percent). It proves cued recall works at that crowding; it does not say the crowd can be read out without a cue.",
+      "how_we_got_it": "harness/ring1/run_core.py, base seed 20260928 (every cell seed is a SeedSequence child of it), 24 cells x 200 trials = 4,800 trials, numpy 2.5.3, on the author's 2019 laptop (Intel i5-8365U, AVX2, no GPU) as the document header states. The committed log is docs/appendix/RING1-CORE.run.txt (total wall clock 22.5 s there). The verify command copies harness/ and docs/ to a temp directory, re-runs the full grid and checks that the verdict line is reproduced word for word; the run is deterministic from the seed. The pre-registration was written before any trial ran and is printed above the results.",
+      "use_in_your_work": "Content-addressed recall from a small, fixed-size associative memory: store several keyed items in one vector and fetch one by a partial cue, with a check that the answer is legal. A reader can use the harness as a template for a pre-registered capacity test of any holographic memory they build.",
+      "honest_limits": "Capacity here is a property of the 1,365-state, four-ring space (see correction C01: the ring address space of this configuration holds 1,365 items; the million-mark MEM-0 figure belongs to scan baselines and a separate integer codebook, not to this resonator). The k16 (phase-rounded) cells are reported by the document but never used to decide the verdict. Unguided (c = 0) cells are not what passed.",
+      "corrections": [
+        "C01"
+      ],
+      "cpu_flags": []
+    },
+    {
+      "id": "R2",
+      "title": "RING-1 T3: the 17 check ring flags wrong settles (PASS on the load-bearing cell, KILL on other codebook seeds)",
+      "section": "docs/02-ring1-check-ring.md § Verdict and results",
+      "claim": "Pooled over the cells with at least 30 wrong settles, the 17 check ring flags 936/944 wrong settles (99.2%) with 0/256 false alarms on correct settles: VERDICT PASS on the pre-registered codebook",
+      "kind": "file",
+      "verify": "python3 -c \"import sys;t=open('docs/appendix/RING1-CHECK.run.txt',encoding='utf-8').read();m=['flag rate on wrong settles  936/944  99.2%', 'false alarms on correct     0/256', 'VERDICT PASS: on the pre-registered codebook the pooled flag rate clears 0.5', 'total wall time: 340.7s', 'ROBUSTNESS SCAN'];bad=[s for s in m if s not in t];print('MISSING',bad) if bad else print('OK: RING1-CHECK verdict, 936/944, 0/256');sys.exit(1 if bad else 0)\"",
+      "expect": "OK: RING1-CHECK verdict, 936/944, 0/256",
+      "evidence": [
+        "docs/appendix/RING1-CHECK.run.txt",
+        "docs/02-ring1-check-ring.md",
+        "harness/ring1/run_check.py"
+      ],
+      "runtime_s": 2,
+      "needs": [
+        "python3"
+      ],
+      "what_it_means": "The fifth ring (modulus 17) is redundant by design: a legal value is 0..1364, so the 17-residue of a settled answer must equal the CRT of the other four taken mod 17. If the resonator settles on a wrong mark, this check disagrees almost every time. The committed run shows 936 of 944 wrong settles flagged (99.2 percent, Wilson-99 interval [98.0, 99.6]) and zero false alarms on 256 correct settles. It proves the check ring is a cheap, reliable error detector for this resonator on the pre-registered codebook; it does not make the resonator more accurate.",
+      "how_we_got_it": "harness/ring1/run_check.py, 300 trials per cell, cells M in (1, 4, 12) x c in (0, 1), codebook seed 20260928 (inherited from RING1-CORE) plus a report-only robustness scan on seeds 1 and 2; full log docs/appendix/RING1-CHECK.run.txt (total wall time 340.7 s on the author's i5-8365U laptop). Re-running the full harness takes about 6 minutes on that machine, so this suite re-checks the committed log rather than re-running; to reproduce, run `python3 harness/ring1/run_check.py` from the corpus root (use `--quick` for a non-decisive smoke run).",
+      "use_in_your_work": "Any residue-coded or holographic retrieval where silent wrong answers are costly: add one redundant coprime ring and reject any answer whose redundant residue disagrees, instead of trusting the top match.",
+      "honest_limits": "The unguided (c = 0) cells collapsed at the pre-registered codebook seed, and the same grid on codebook seeds 1 and 2 is marked KILL in the robustness table (too few wrong settles to evaluate the criterion; the pooled flag rate there is not what passed). The document adds a publication note that this is the unguided seed lottery, a property of unguided factorisation and not of the check ring. The PASS is for the load-bearing cell M = 12, c = 1 and the pre-registered seed.",
+      "cpu_flags": [],
+      "corrections": []
+    },
+    {
+      "id": "R3",
+      "title": "RING-1: keyed direct storage reads exactly; a 1-bit tag lets two marks share a slot (PASS)",
+      "section": "docs/03-ring1-direct-keyed-storage.md § Verdict / pre-registered decision",
+      "claim": "Direct float exact-decode 1000/1000 = 100.0% (Wilson-99 lower 99.3%); a tagged 2-mark slot recovers both marks 300/300 against 267/300 = 0.890 untagged: VERDICT PASS (both pre-registered clauses met)",
+      "kind": "run",
+      "verify": "T=$(mktemp -d) && trap 'rm -rf $T' EXIT && cp -r harness docs $T/ && (cd $T && python3 harness/ring1/run_direct.py > out.txt 2>&1; true) && grep -qF 'Direct float exact-decode: 1000/1000 = 100.0%  wilson-99 lower = 99.3%' $T/out.txt && grep -qF 'tagged 2-mark (T + T.conj, c=0): both-correct 300/300=1.000' $T/out.txt && grep -qF 'VERDICT: PASS (both pre-registered clauses met)' $T/out.txt && echo 'OK: Direct float exact-decode: 1000/1000 = 100.0%  wilson-99 lower = 99.3%; tagged 2-mark (T + T.conj, c=0): both-correct 300/300=1.000; VERDICT: PASS (both pre-registered clauses met)'",
+      "expect": "direct 1000/1000, tagged 300/300 vs untagged 267/300, VERDICT: PASS (both pre-registered clauses met)",
+      "evidence": [
+        "docs/appendix/RING1-DIRECT.run.txt",
+        "docs/03-ring1-direct-keyed-storage.md",
+        "harness/ring1/run_direct.py"
+      ],
+      "runtime_s": 550,
+      "needs": [
+        "python3 3.12",
+        "numpy 2.5.3"
+      ],
+      "what_it_means": "Instead of binding every ring into one product that the resonator must factor, each ring's value is written under its own key, so reading one ring is a direct correlation with no iteration. The run shows 1,000 of 1,000 single marks decoded exactly, and that a one-bit tag (T and its conjugate) lets two marks live in one slot and both come back 300 of 300 times, against 267 of 300 (0.890) without the tag. It proves keyed direct storage is exact at this size and that the tag trick works; it says nothing about large crowds.",
+      "how_we_got_it": "harness/ring1/run_direct.py (D = 5120, rings 3/5/7/13/17), run on the author's i5-8365U laptop; log docs/appendix/RING1-DIRECT.run.txt. The document records a brief defect found and fixed during the work (residue codebooks shared position 0) and a seat note in the harness source. This suite re-runs the full harness in a temp copy and checks three printed lines. The committed log carries no wall time; measured here: 551 s on an 8-core host at load average about 30 (other jobs running); an earlier run of the same script under 6 concurrent harnesses took 1,011 s. On an idle laptop expect minutes, not seconds.",
+      "use_in_your_work": "Fast, exact key-to-value lookup in a vector memory, and a simple way to put two items in one slot without them washing each other out.",
+      "honest_limits": "PASS 'after a brief defect was fixed' (the document's own wording): the first brief was wrong and the harness was corrected before this run. Tested at single-mark and two-mark loads only. The runtime was not recorded in the committed log; the runtime_s here (550 s) was measured on a loaded host.",
+      "cpu_flags": [],
+      "corrections": []
+    },
+    {
+      "id": "R4",
+      "title": "RING-1: dispersing marks over many slots does not beat one crowded slot (KILL)",
+      "section": "docs/04-ring1-disperse.md § Verdict",
+      "claim": "At M = 48 the best S >= 4 cell (S = 16) has a Wilson-99% lower bound of 0.1714, which does not exceed the S = 1 point recall 0.2750 by the required 0.20: VERDICT KILL",
+      "kind": "file",
+      "verify": "python3 -c \"import sys;t=open('docs/appendix/RING1-DISPERSE.run.txt',encoding='utf-8').read();t=' '.join(t.split());m=['VERDICT: KILL: at M=48 the best S>=4 cell (S=16) has a Wilson-99% lower bound of 0.1714, which does NOT exceed the S=1 point recall of 0.2750 by the required 0.20', 'elapsed: 227.5 s'];bad=[s for s in m if s not in t];print('MISSING',bad) if bad else print('OK: RING1-DISPERSE KILL at M=48');sys.exit(1 if bad else 0)\"",
+      "expect": "OK: RING1-DISPERSE KILL at M=48",
+      "evidence": [
+        "docs/appendix/RING1-DISPERSE.run.txt",
+        "docs/04-ring1-disperse.md",
+        "harness/ring1/run_disperse.py"
+      ],
+      "runtime_s": 2,
+      "needs": [
+        "python3"
+      ],
+      "what_it_means": "The idea tested: if one slot is too crowded, spread the same marks over S slots (fewer per slot) and probe all of them. The pre-registered bar needed the best spread arm to beat the single crowded slot by 0.20 recall at M = 48. It did not: S = 1 recalled 27.5 percent; S = 16 recalled 24.0 percent and cost about 20 times more time per query (190 ms against 9.5 ms). The honest reading is a negative result: dispersal buys nothing here and costs work. Failing the bar is as informative as passing it, and it is kept as its own row.",
+      "how_we_got_it": "harness/ring1/run_disperse.py, 200 trials per cell, M in (12, 24, 48, 96) with S from 1 to 16, i5-8365U laptop; committed log docs/appendix/RING1-DISPERSE.run.txt (elapsed 227.5 s). This suite re-checks the committed log rather than re-running, because the full grid is near the five-minute budget on the author's laptop. To reproduce: `python3 harness/ring1/run_disperse.py` (it writes its report to docs/appendix/RING1-DISPERSE.run.txt by default, so run it in a scratch copy; `--quick` never writes). A full re-run was done for this suite in a scratch copy on a heavily loaded 8-core host (elapsed 5,109.9 s there, about 22 times the laptop time because other jobs were running) and printed the identical KILL line.",
+      "use_in_your_work": "Before sharding a vector memory to relieve crowding, measure it: this is a worked example of a pre-registered 'does the obvious fix help' test with an honest KILL.",
+      "honest_limits": "Measured for this resonator, D = 5120, unguided probing of every dispersed slot; it does not show dispersal is useless for other readouts or larger D. The wall time (about 227 s on the laptop) is close to the five-minute budget; a loaded host takes far longer.",
+      "cpu_flags": [],
+      "corrections": []
+    },
+    {
+      "id": "R5",
+      "title": "RING-1 T4: a two-stage halo chain ties one resonator and costs 2.5x the iterations (KILL)",
+      "section": "docs/09-ring1-halo-two-stage-chain.md § Verdict",
+      "claim": "At M = 32 Arm B's Wilson-99% lower bound (31.7%) does not exceed Arm A's point recall (38.0%) and Arm B needs median 5.0 iterations against 2.0: VERDICT KILL, the halo buys nothing",
+      "kind": "run",
+      "verify": "T=$(mktemp -d) && trap 'rm -rf $T' EXIT && cp -r harness docs $T/ && (cd $T && python3 harness/ring1/run_halo.py > out.txt 2>&1; true) && grep -qF 'lower bound (31.7%) does not exceed Arm A' $T/out.txt && grep -qF 'point recall (38.0%)' $T/out.txt && grep -qF 'medIt_B 5.0 vs medIt_A 2.0' $T/out.txt && echo 'OK: lower bound (31.7%) does not exceed Arm A; point recall (38.0%); medIt_B 5.0 vs medIt_A 2.0'",
+      "expect": "Arm B lower bound 31.7% vs Arm A point recall 38.0%; medIt_B 5.0 vs medIt_A 2.0",
+      "evidence": [
+        "docs/appendix/RING1-HALO.run.txt",
+        "docs/09-ring1-halo-two-stage-chain.md",
+        "harness/ring1/run_halo.py"
+      ],
+      "runtime_s": 60,
+      "needs": [
+        "python3 3.12",
+        "numpy 2.5.3"
+      ],
+      "what_it_means": "Arm A is one resonator; Arm B adds a second stage (a halo) meant to clean up the first. At the decision cell M = 32 they are the same within noise (A 114/300 = 38.0 percent, B 116/300 = 38.7 percent) while B needs 5 median iterations against A's 2. So the pre-registered claim 'the halo helps' is killed. At M = 12 the same: A 206/300 = 68.7 percent, B 203/300 = 67.7 percent. The negative stays in the corpus on purpose.",
+      "how_we_got_it": "harness/ring1/run_halo.py, 300 trials per decision cell, i5-8365U laptop; log docs/appendix/RING1-HALO.run.txt (total wall clock 13.1 s there, about 1,200 settles). This suite re-runs it in a temp copy and matches the KILL numbers. The harness also has --quick and --verify-only modes (harness/README.md).",
+      "use_in_your_work": "Evidence for skipping a multi-stage cleanup that looks sensible but does not pay for itself in iterations; also a template for a paired A/B with a pre-registered decision cell.",
+      "honest_limits": "Tested at this crowding and dimension only; the document records that the two arms fail on different trials (A-only 44, B-only 46), which leaves open an ensemble reading that this test does not evaluate.",
+      "cpu_flags": [],
+      "corrections": []
+    },
+    {
+      "id": "R6",
+      "title": "RING-1 T2: a smooth fractional-phase ring breaks recall when it is bound into every mark (KILL); the cued form works",
+      "section": "docs/10-ring1-smooth-fractional-phase.md § Results and Correction",
+      "claim": "With the smooth ring bound in, target recall at M = 12, c = 1 collapses to 2/300 (0.7%) against 198/300 (66.0%) without it: VERDICT KILL, recall criterion failed; clamping the smooth ring to the target's tick gives 196/300 (65.3%)",
+      "kind": "run",
+      "verify": "T=$(mktemp -d) && trap 'rm -rf $T' EXIT && cp -r harness docs $T/ && (cd $T && python3 harness/ring1/run_smooth.py > out.txt 2>&1; true) && grep -qF 'Without smooth ring: target=198/300 66.0%' $T/out.txt && grep -qF 'With smooth ring:    target=2/300 0.7%' $T/out.txt && grep -qF 'Smooth-ring clamped: target=196/300 65.3%' $T/out.txt && grep -qF 'VERDICT: KILL: recall criterion failed' $T/out.txt && echo 'OK: Without smooth ring: target=198/300 66.0%; With smooth ring:    target=2/300 0.7%; Smooth-ring clamped: target=196/300 65.3%; VERDICT: KILL: recall criterion failed'",
+      "expect": "without 198/300 66.0%; with 2/300 0.7%; clamped 196/300 65.3%; VERDICT: KILL: recall criterion failed",
+      "evidence": [
+        "docs/appendix/RING1-SMOOTH.run.txt",
+        "docs/10-ring1-smooth-fractional-phase.md",
+        "harness/ring1/run_smooth.py"
+      ],
+      "runtime_s": 412,
+      "needs": [
+        "python3 3.12",
+        "numpy 2.5.3"
+      ],
+      "what_it_means": "A 'smooth' ring stores a fractional phase so nearby times look similar ('around when'). Part (a) shows the neighbour-similarity curve works (PASS, difference above five standard errors). Part (b), the pre-registered recall test, fails: binding the smooth ring into every mark and trying to discover it by resonance drops recall to 0.7 percent. Part (c) shows the cue form works: if the smooth ring is clamped to the target's tick, recall is 65.3 percent, matching the plain 13-ring clamp. So the KILL is about discovering the smooth ring, not about using it with a cue.",
+      "how_we_got_it": "harness/ring1/run_smooth.py, 300 trials per cell, i5-8365U laptop; log docs/appendix/RING1-SMOOTH.run.txt. A seat addendum in the document records harness fixes before this run (the first run bound the smooth ring but resonated only the exact rings, which guaranteed 0/30 by construction). This suite re-runs the harness in a temp copy; it exits 1 on KILL by design, which the verify command tolerates and checks the printed numbers instead.",
+      "use_in_your_work": "Time-aware recall ('around when') in a vector memory: use the smooth ring only as a cue, not as something the resonator must find on its own.",
+      "honest_limits": "The KILL is pre-registered and stands as written; the document's own correction says the cue form works. The committed log gives no wall time; the runtime_s here (412 s) was measured on an 8-core host at load average about 30, so an idle host should be faster.",
+      "cpu_flags": [],
+      "corrections": []
+    },
+    {
+      "id": "R7",
+      "title": "SOFTSWEEP: decode_soft never answers silently wrong, but the registered bar was unattainable (KILL on half 1, half 2 passes)",
+      "section": "docs/05-ring1-softsweep-decode-soft.md § Verdict and Reviewer's reading",
+      "claim": "decode_soft (min_confidence 0.1) made 0 silent-wrong decodes in 1,200 trials at k in {1,2,5,10}; at k = 5 it recovered a true member 300/300 against direct_probe 10/300; the registered half 1 (Wilson-99 upper bound <= 0.02 at n = 100) is KILL because 0/100 has upper bound 0.062",
+      "kind": "external",
+      "verify": "python3 -c \"import omni_ring\" && python3 harness/soft_sweep.py --trials 300",
+      "expect": "decode_soft k=5 correct 300/300 vs dp 10/300, silent-wrong 0/300 (only reproducible with the omni-ring package installed)",
+      "evidence": [
+        "docs/05-ring1-softsweep-decode-soft.md",
+        "harness/soft_sweep.py",
+        "harness/README.md"
+      ],
+      "runtime_s": 20,
+      "needs": [
+        "python3 3.12",
+        "numpy",
+        "pip install omni-ring (the separate licensed engine)"
+      ],
+      "what_it_means": "Two decoders read a slot holding k marks. decode_soft lets the resonator iterate and rejects any answer the 17 check ring does not accept; direct_probe takes the best residue on each ring in sequence. At k = 5, decode_soft returns a true member 300 of 300 times; direct_probe returns one 10 of 300 times and is silently wrong 10 of 300. At k = 2 (two equal marks, a symmetric mix) decode_soft abstains (229/300 rejected) instead of guessing. The verdict is nonetheless KILL as registered, because the Wilson upper bound for 0 errors in 100 trials is 0.062, so the registered bar of 0.02 could not be met at that n. The document says so itself.",
+      "how_we_got_it": "harness/soft_sweep.py (the rewritten SOFTSWEEP harness, from the omniring-llm research prototype), D = 5120, rings (3,5,7,13,17), 100 trials per cell (runtime 18 s) plus a supplementary 300-trial run, on the author's laptop. The invalid v1 harness is not shipped and no v1 number appears in the corpus. This row is external because soft_sweep.py imports omni_ring (codebook, chain, resonator, crt, check), a separate licensed package that is not in this repository; the 'file' evidence is the results table in docs/05.",
+      "use_in_your_work": "Choosing a decoder where a wrong answer is worse than no answer: the result is a template for reporting abstentions and silent-wrong rates separately.",
+      "honest_limits": "Unguided ds@ rows ran at codebook seed 0, which happens to be a good draw; at seeds 42 and 21 unguided decoding returned 0/20 correct (all abstained, 0 silent-wrong). Unguided decode is a seed lottery (the document's correction at the top, with the 15/15 vs 1/15 figures in doc 06). The cued (clamp-13) arm is the robust one: 294/300 at k = 5. The registered half 1 fails by construction, not by evidence of silent errors.",
+      "cpu_flags": [],
+      "corrections": []
+    },
+    {
+      "id": "R8",
+      "title": "RING-3: PEEL passes; DIAMOND, CORREL, TABU, FRET are KILLed",
+      "section": "docs/06-ring3-peel-diamond-correl-tabu-fret.md § Results",
+      "claim": "PEEL M=24: two peel sweeps recover 14.77 true marks per slot against 8.45 for one plain sweep with accepted fakes 82/2298 (PASS); DIAMOND lower 0.261 vs flat 0.960 (KILL); CORREL KILL; TABU rescued 5 (11.4%) (KILL); FRET 135/150 = 90.0% vs flat 140/150 = 93.3% (KILL)",
+      "kind": "file",
+      "verify": "python3 -c \"import sys;t=open('docs/appendix/RING3-RESULTS.run.txt',encoding='utf-8').read();m=['== PEEL: PASS', '14.77 vs plain 8.45', 'fakes 82/2298 upper 0.047', '== DIAMOND: KILL', 'diamond lower 0.261 vs flat 0.960', '== CORREL: KILL', '== TABU: KILL', 'rescued 5 (11.4%', '== FRET: KILL', '135/150 = 90.0%', '140/150 = 93.3%'];bad=[s for s in m if s not in t];print('MISSING',bad) if bad else print('OK: RING3 verdicts: 1 PASS, 4 KILL');sys.exit(1 if bad else 0)\"",
+      "expect": "OK: RING3 verdicts: 1 PASS, 4 KILL",
+      "evidence": [
+        "docs/appendix/RING3-RESULTS.run.txt",
+        "docs/06-ring3-peel-diamond-correl-tabu-fret.md",
+        "harness/ring3/run_diamond2.py",
+        "harness/ring3/run_ring3.py"
+      ],
+      "runtime_s": 2,
+      "needs": [
+        "python3"
+      ],
+      "what_it_means": "Five pre-registered ideas for reading crowded slots, scored in one run. Only PEEL (read a mark, subtract it, read again) clears its bar: at M = 24 it recovers 14.77 true marks per slot against 8.45 for one sweep, with accepted fakes at an upper bound of 0.047, inside the 0.05 limit. The other four fail: a four-corner diamond recalls far less than the flat system (lower 0.261 vs 0.960); decorrelating similar codebooks does not help the way predicted (CORREL); a tabu restart rescues only 5 of 44 stuck cases (11.4 percent) with too many silent errors; a coarse-to-fine search (FRET) is no better than flat (90.0 percent against 93.3 percent). A suite row exists for each KILL on purpose.",
+      "how_we_got_it": "The 'file' check re-reads docs/appendix/RING3-RESULTS.run.txt (verdict lines and the numbers above). The generating harness is harness/ring3/run_ring3.py (library) with run_diamond2.py; per-section times in the log (PEEL 190 s, DIAMOND 38 s, FRET 89 s) sum to about 5.5 minutes, over this suite's re-run budget, so the full run is not re-executed here. The DIAMOND-2 follow-up IS re-run in row R9.",
+      "use_in_your_work": "PEEL (explain away accepted marks, then read the residual) is a reusable readout for any superposed memory; the four KILLs save you from re-trying the same four ideas.",
+      "honest_limits": "The document header lists PEEL PASS and the four KILLs, and its 'Harness disclosure' reports the unguided seed lottery (15/15 vs 1/15 across codebook draws), so unguided numbers in this family should not be read as general. The follow-up in R9 shows a smaller-corner diamond reaches 91 percent. The superseded v1 smoke script is kept for provenance only.",
+      "cpu_flags": [],
+      "corrections": []
+    },
+    {
+      "id": "R9",
+      "title": "RING-3b DIAMOND-2: smaller corners make the diamond readable (91%), residue corners do not",
+      "section": "docs/06-ring3-peel-diamond-correl-tabu-fret.md § DIAMOND-2 follow-up",
+      "claim": "Category corners K = 15 plus checksum: 136/150 = 90.7% of both unknown corners at M = 12; residue corners (3,5,7)+11 with a 7-ring cue: 42/150 = 28.0%",
+      "kind": "run",
+      "verify": "T=$(mktemp -d) && trap 'rm -rf $T' EXIT && cp -r harness docs $T/ && (cd $T && python3 harness/ring3/run_diamond2.py 150 > out.txt 2>&1; true) && grep -qF '(a) category corners K=15 + checksum | 12 | 136/150 = 90.7% [82.7%, 95.2%] | 8/14 |' $T/out.txt && grep -qF '(b) residue corners (3,5,7)+11, 7-ring cue per unknown corner | 12 | 42/150 = 28.0% [19.6%, 38.2%] | 106/108 |' $T/out.txt && echo 'OK: (a) category corners K=15 + checksum | 12 | 136/150 = 90.7% [82.7%, 95.2%] | 8/14 |; (b) residue corners (3,5,7)+11, 7-ring cue per unknown corner | 12 | 42/150 = 28.0% [19.6%, 38.2%] | 106/108 |'",
+      "expect": "(a) K=15 12 136/150 = 90.7%; (b) residue 12 42/150 = 28.0%",
+      "evidence": [
+        "docs/appendix/RING3b-DIAMOND2.run.txt",
+        "docs/06-ring3-peel-diamond-correl-tabu-fret.md",
+        "harness/ring3/run_diamond2.py"
+      ],
+      "runtime_s": 250,
+      "needs": [
+        "python3 3.12",
+        "numpy 2.5.3"
+      ],
+      "what_it_means": "After the diamond KILL in R8, the seat tried smaller category corners. With 15 values per corner plus a checksum ring, both unknown corners are recovered 136 of 150 times (90.7 percent) at M = 12 and 118 of 150 (78.7 percent) at M = 24. With 35 values it drops to 70.0 percent; with residue corners and a one-ring cue it is only 28.0 percent. The design is readable only when each corner stays small.",
+      "how_we_got_it": "harness/ring3/run_diamond2.py with n = 150 trials, i5-8365U laptop; committed table docs/appendix/RING3b-DIAMOND2.run.txt. The verify command re-runs the script in a temp copy; the (a) and (b) rows reproduce byte for byte. It took about 4.7 minutes on a heavily loaded 8-core host, so expect well under that on an idle machine.",
+      "use_in_your_work": "Sizing the sub-codebooks of a multi-corner VSA layout: the table gives recall against corner size.",
+      "honest_limits": "The committed table also contains design (c) rows (105-value corners split into random category sub-rings: 7/150 = 4.7% at M = 12) that the shipped script version does not print on re-run; the script produces (a) and (b) only. Those (c) rows are therefore a recorded result from an earlier script state, not re-verified here.",
+      "cpu_flags": [],
+      "corrections": []
+    },
+    {
+      "id": "P1",
+      "title": "Dual-T50 cut read: ring tables equal Gomory-Hu on 105/105 pairs and 200/200 fields; hot clusters need the box read",
+      "section": "docs/31-dual-t50-cut-read-and-toroid-mailbox.md § The dual-T50 cut read",
+      "claim": "G120 (15 toroids): the ring read equals the Gomory-Hu tree on 105 of 105 pairs, 17.2x faster as recorded; 200 seeded routed fields: 200 of 200 exact; on hot clusters the ring family alone is exact on 85 of 100 fields (worst gap 0.556 of C), ring plus box read 100 of 100",
+      "kind": "file",
+      "verify": "python3 -c \"import json;d=json.load(open('docs/appendix/part7/ch6-cuts/results/g5-t50-cuts.json'));g=d['G120'];r=d['robustness'];h=d['hot_cluster'][0];assert (g['pairs'],g['pairs_equal'],g['speedup'])==(105,105,17.2);assert (r['fields'],r['all_105_pairs_equal'])==(200,200);assert (h['fields'],h['ring_family_exact'],h['ring_plus_box_exact'],h['worst_gap_over_C_ring'])==(100,85,100,0.556);print('OK: 105/105, 17.2x, 200/200, hot cluster 85/100 ring-only, 100/100 with box')\"",
+      "expect": "OK: 105/105, 17.2x, 200/200, hot cluster 85/100 ring-only, 100/100 with box",
+      "evidence": [
+        "docs/appendix/part7/ch6-cuts/results/g5-t50-cuts.json",
+        "docs/31-dual-t50-cut-read-and-toroid-mailbox.md",
+        "harness/part7/ch2-cuts/g5_t50_cuts.py",
+        "harness/part7/ch2-cuts/g4_cuts.py"
+      ],
+      "runtime_s": 2,
+      "needs": [
+        "python3"
+      ],
+      "what_it_means": "In a 3 x 5 array of toroids, the two rings' own traffic counters can be read as min-cuts between any pair without running max-flow. On the recorded G120 field the read matches the exact Gomory-Hu tree on all 105 pairs and costs a fraction of the time (17.2x as recorded); 200 seeded routed fields were all exact. The same file records where it breaks: on hot clusters that concentrate traffic in a sub-torus, the ring family alone is exact on only 85 of 100 fields (worst gap 0.556 of capacity), and adding the box read restores 100 of 100. So the shortcut is exact for dimension-order routing but needs the box read when traffic clusters.",
+      "how_we_got_it": "harness/part7/ch2-cuts/g5_t50_cuts.py (input: the recorded G120 rung record) against the Gomory-Hu baseline harness/part7/ch2-cuts/g4_cuts.py (needs networkx); results in docs/appendix/part7/ch6-cuts/results/g5-t50-cuts.json (a copy sits under ch2-cuts and ch1-t50-cuts). Timings are Python on the author's laptop. The run is not repeated here because the baseline needs networkx and the G120 input record is not at the path the script expects; this row re-checks the committed result file.",
+      "use_in_your_work": "Finding bottleneck links in a product-of-rings network from counters you already keep, with an exactness guarantee for dimension-order routing and a measured warning for clustered traffic.",
+      "honest_limits": "The document says the earlier draft's figures (4.2 ms, 8.8 ms against 184 ms, 1.6 s against about 104 s) were corrected to the result file, and two statements (i.i.d. and lognormal link loads) stay recorded-only with no entry in the result file. The 1,155-toroid Gomory-Hu time is an estimate, not a run. Weighted-graph agreement is empirical, not a theorem.",
+      "cpu_flags": [],
+      "corrections": []
+    },
+    {
+      "id": "P2",
+      "title": "Omni Web engine: test262 conformance run, 54.5% of executed tests",
+      "section": "docs/33-omni-web-platform-census-orbit-and-merge-gate.md § The page platform",
+      "claim": "test262 (suite commit c8c79889): 53,614 tests collected, 29,203 passing, 24,404 failing, 7 skipped, pass rate 0.5448 (54.5%); later rounds 55.33%, 56.83%, 56.85%",
+      "kind": "file",
+      "verify": "python3 -c \"import json;l=json.loads(open('docs/appendix/part7/ch3-test262/results/full.summary.txt').readline());b=json.load(open('docs/appendix/part7/ch3-test262/results/baseline.json'));assert (l['tests'],l['pass'],l['fail'],l['skip'],l['pass_rate'])==(53614,29203,24404,7,0.5448);assert b['test262']=='c8c79889' and b['pass']==29203;r=json.loads(open('docs/appendix/part7/ch3-test262/results/r2b.summary.txt').readline());assert r['pass_rate']==0.5685;print('OK: 29203/53614 pass_rate 0.5448; later 0.5685')\"",
+      "expect": "OK: 29203/53614 pass_rate 0.5448; later 0.5685",
+      "evidence": [
+        "docs/appendix/part7/ch3-test262/results/full.summary.txt",
+        "docs/appendix/part7/ch3-test262/results/baseline.json",
+        "docs/appendix/part7/ch3-test262/results/r2b.summary.txt",
+        "docs/33-omni-web-platform-census-orbit-and-merge-gate.md",
+        "harness/part7/ch3-test262/test262.py"
+      ],
+      "runtime_s": 2,
+      "needs": [
+        "python3"
+      ],
+      "what_it_means": "The official ECMAScript conformance suite was run against the browser engine's JavaScript interpreter, one process per test: 29,203 of the executed tests passed, 24,404 failed and 7 were skipped, a 54.5 percent pass rate. It is an honest, unflattering number. The failures are classified in baseline.json (7,734 uncaught ReferenceErrors, 7,674 Test262Errors, 3,756 missing early syntax errors, 2,748 TypeErrors). Two later rounds improve it to 56.85 percent. It proves the interpreter is a real but incomplete implementation; it does not claim conformance.",
+      "how_we_got_it": "harness/part7/ch3-test262/test262.py with the test262 checkout at commit c8c79889, jobs 6, timeout 10 s, run on 2026-10-08 00:30, 497 s; the binary's sha256 prefix is b4aedcda77368db2. The run needs the omni-render engine binary (a Rust build, not in this repository) and a 53,000-test external checkout, so this suite re-checks the committed result files only. Engine: a second engine worktree, not the browser's pinned engine.",
+      "use_in_your_work": "A baseline for any small JavaScript engine's conformance, and a template for publishing the failure classes beside the pass rate.",
+      "honest_limits": "Excluding the two Temporal directories (4 of 6,634 passing) the document gives 62.2% (29,199 of 46,973); that figure is quoted in the disclosure text, not in a result file. The later rounds (r1, r2, r2b) name no binary. This is the interpreter only, not the web platform. Denominators: the disclosure notes 53,614 collected and 53,607 executed.",
+      "cpu_flags": [],
+      "corrections": []
+    },
+    {
+      "id": "P3",
+      "title": "Omni Web 106-check JS probe and 13-check connectivity pass on eight engine builds (smoke test, not conformance)",
+      "section": "docs/33-omni-web-platform-census-orbit-and-merge-gate.md § The page platform (probe) and § The merge gate",
+      "claim": "Eight later gate folders each hold jsprobe.txt 'FINAL pass 106/106' and a connectivity run in which all 13 checks print PASS",
+      "kind": "file",
+      "verify": "python3 -c \"import glob;gs=sorted(glob.glob('docs/appendix/part7/ch3-later-gates/results/gate-0*'));assert len(gs)==8;[(None if 'FINAL pass 106/106' in open(g+'/jsprobe.txt').read() and sum(1 for x in open(g+'/conn.txt') if x.startswith('PASS'))==13 else (_ for _ in ()).throw(SystemExit('FAIL '+g))) for g in gs];print('OK: 8 gates, 106/106 probe, 13 PASS lines of connectivity each')\"",
+      "expect": "OK: 8 gates, 106/106 probe, 13 PASS lines of connectivity each",
+      "evidence": [
+        "docs/appendix/part7/ch3-later-gates/results/gate-08/jsprobe.txt",
+        "docs/appendix/part7/ch3-later-gates/results/gate-08/conn.txt",
+        "docs/appendix/part7/ch3-later-gates/results/gate-08/binaries.txt",
+        "docs/33-omni-web-platform-census-orbit-and-merge-gate.md",
+        "harness/part7/ch3-merge-gate/merge-gate.sh"
+      ],
+      "runtime_s": 2,
+      "needs": [
+        "python3"
+      ],
+      "what_it_means": "A page-platform smoke probe (106 small JavaScript and DOM checks) and a connectivity probe (gzip, chunked, redirects, 404, 500, cookies, a PDF, and more) were run against eight successive builds of a second engine worktree, and each saved folder shows 106/106 and 13 PASS lines. It shows those builds behave on the probe pages. It does not show browser conformance: the document says plainly that a 106-check probe is a smoke test, and that the eight gate folders are not browser merge gates.",
+      "how_we_got_it": "harness/part7/ch3-merge-gate/merge-gate.sh with the JS probe (harness/part7/ch3-js-platform/) and connectivity server (harness/part7/ch3-connectivity/), run by the author; each gate folder holds jsprobe.txt, conn.txt and binaries.txt (sha256 of old and new binaries). The runs need the omni-render binaries (Rust, not in this repository), so this suite re-checks the saved files only.",
+      "use_in_your_work": "A cheap regression gate for an experimental browser engine: a fixed probe page, a local server of tricky HTTP responses, and a binary hash per run.",
+      "honest_limits": "The document states: the 66 / 106 -> 79 -> 83 -> 106 / 106 progression is recorded in the author's log with no saved result; the three browser merge-gate runs (0 boxes lost) name engine revisions that no shipped result file records; Chrome printing 106/106 on the same page validates the probe itself. Everything here is a probe on the author's pages, not a conformance suite.",
+      "cpu_flags": [],
+      "corrections": []
+    },
+    {
+      "id": "D1",
+      "title": "Disclosure 45.1: exact residue-ring softmax and loss inside a ternary trainer, bit-identical on CPU and GPU",
+      "section": "docs/45-status-disclosure-2026-10-14.md § 45.1 Exact residue-ring softmax, log-sum-exp and loss inside a ternary transformer trainer",
+      "claim": "CPU and GPU kernels bit-identical (0 mismatches, three runs, two shapes); ring LSE error 1.5e-11 against 3.1e-6 for float32; device == host on 40/40 training buffers; loss 9.158415 vs 9.158470; ring term cut to 1.98x the float kernel (bench 2048x8192: 69.6 -> 6.1 ms)",
+      "kind": "file",
+      "verify": "python3 -c \"import sys;t=open('docs/45-status-disclosure-2026-10-14.md',encoding='utf-8').read();t=' '.join(t.split());m=['0 mismatches, three runs, two shapes', '1.5e-11 against 3.1e-6 for float32', 'device == host on 40/40 training buffers', '(9.158415 vs 9.158470)', '69.6 → 6.1 ms', 'those harnesses and result files are not published in this release'];bad=[s for s in m if s not in t];print('MISSING',bad) if bad else print('OK: 45.1 numbers and the not-published caveat present');sys.exit(1 if bad else 0)\"",
+      "expect": "OK: 45.1 numbers and the not-published caveat present",
+      "evidence": [
+        "docs/45-status-disclosure-2026-10-14.md"
+      ],
+      "runtime_s": 1,
+      "needs": [
+        "python3"
+      ],
+      "what_it_means": "The head of a ternary transformer (softmax, log-sum-exp, cross-entropy) is computed in residue arithmetic over 20 outer rings, so it is exact integer work, and the same source emits host and device code. The disclosure reports that the CPU and GPU kernels agree bit for bit and that the ring log-sum-exp is far closer to a float64 reference (error 1.5e-11) than float32 is (3.1e-6). This row checks that those numbers are what the disclosure states; it proves nothing about the numbers themselves beyond what the disclosure says.",
+      "how_we_got_it": "Reported in docs/45-status-disclosure-2026-10-14.md section 45.1 from saved runs (command, binary revision, result file) in the author's working records. The chapter states those harnesses and result files are not published in this release, so this row only reads the disclosure text. The CUDA run used a 6.8M-parameter school-size trainer; the GPU model is not named in the section quoted here.",
+      "use_in_your_work": "Exact, order-independent loss computation for training you want to audit; the section is a design-level description of the method and its measured agreement.",
+      "honest_limits": "Not independently reproducible from this repository: no harness, binary or result file for 45.1 is published (the disclosure says so). Not yet tested: Vulkan back end; R > 1; vocabularies below the chunked threshold. This row verifies that the disclosure says what the suite quotes, not that the measurement is correct. The hardware for the 45.1 timing is not named in this section.",
+      "cpu_flags": [],
+      "corrections": []
+    },
+    {
+      "id": "D2",
+      "title": "Disclosure 45.2: ring core in attention replaced by T50 / Armilla 3x3 / Cyclone routing (mixed: identity and guard hold, routing costs loss)",
+      "section": "docs/45-status-disclosure-2026-10-14.md § 45.2 The ring core inside attention, replaced by a Cyclone or an Armilla 3×3 structure",
+      "claim": "Frozen 6.8M checkpoint, 7,364 held-out tokens: guard observe-only 0 false alarms in 18,223 tokens; single-residue faults 7,354 corrected / 0 wrong; routing by address at fixed weights costs +1.4...+1.9 nats, the same as random slots; trained with the mask the gap closes from +1.44 to +0.26 at 39 % of dense attention work",
+      "kind": "file",
+      "verify": "python3 -c \"import sys;t=open('docs/45-status-disclosure-2026-10-14.md',encoding='utf-8').read();t=' '.join(t.split());m=['7,364 held-out tokens', '0 false alarms in 18,223 tokens', '7,354 corrected / 0 wrong', '+1.4…+1.9 nats', '+1.44 to +0.26 at 39 % of dense attention work', 'did not beat it'];bad=[s for s in m if s not in t];print('MISSING',bad) if bad else print('OK: 45.2 numbers present');sys.exit(1 if bad else 0)\"",
+      "expect": "OK: 45.2 numbers present",
+      "evidence": [
+        "docs/45-status-disclosure-2026-10-14.md"
+      ],
+      "runtime_s": 1,
+      "needs": [
+        "python3"
+      ],
+      "what_it_means": "Three replacements for the attention phase rings were tried on a frozen checkpoint. (a) Adding T50 lanes at phase 0 leaves logits byte-identical, and a trained variant matched the dense held-out loss within seed noise but did not beat it. (b) An Armilla-style residue guard on every token address corrected 7,354 single-residue faults with 0 wrong. (c) Routing attention by address at fixed weights hurts as much as random slots (+1.4 to +1.9 nats); training with the mask closes most of the gap to +0.26 at 39 percent of dense attention work. A mixed result: the guard is a win; the routing is not yet a win.",
+      "how_we_got_it": "Reported in docs/45-status-disclosure-2026-10-14.md section 45.2 from saved runs in the author's working records; the harnesses and result files are not published in this release, so this row checks the disclosure text only.",
+      "use_in_your_work": "Evidence for adding a cheap residue-code guard to a learned address, and for not expecting free speedups from hard routing at fixed weights.",
+      "honest_limits": "Not independently reproducible from this repository. The disclosure says longer and annealed training arms (two seeds, CPU and GPU) were still running at the time of writing, so the routing result is not final. The earlier 'abstain -> position clock' fallback cost up to +1.4 nats; the recompute guard that replaced it is now the engine default.",
+      "cpu_flags": [],
+      "corrections": []
+    },
+    {
+      "id": "D3",
+      "title": "Disclosure 45.3: cyclone MLP slot-cores do NOT beat the dense trunk (negative result)",
+      "section": "docs/45-status-disclosure-2026-10-14.md § 45.3 Cyclone shape as the model's MLP core (SuperSeed-EVO) — negative result",
+      "claim": "Held-out loss: dense 0.4034; hub + 8 slots +4.2 % (answer span +12.7 %); with hub_pull +9.6 % (answer +35.3 %, canary +29.1 %): the MLP-slot form does not beat the dense trunk at this size; with the Armilla 3x3 guard a faulty unit still gives a bit-exact step, without it the step goes to NaN",
+      "kind": "file",
+      "verify": "python3 -c \"import sys;t=open('docs/45-status-disclosure-2026-10-14.md',encoding='utf-8').read();t=' '.join(t.split());m=['dense 0.4034', 'hub + 8 slots +4.2 % (answer span +12.7 %)', '+9.6 % (answer +35.3 %, canary +29.1 %)', 'does not beat the dense trunk at this size', 'without the guard the step goes to NaN', 'RTX A6000, 18 min per arm'];bad=[s for s in m if s not in t];print('MISSING',bad) if bad else print('OK: 45.3 negative result numbers present');sys.exit(1 if bad else 0)\"",
+      "expect": "OK: 45.3 negative result numbers present",
+      "evidence": [
+        "docs/45-status-disclosure-2026-10-14.md"
+      ],
+      "runtime_s": 1,
+      "needs": [
+        "python3"
+      ],
+      "what_it_means": "Splitting each block's MLP into a hub plus eight address-selected slot-cores did worse than the plain dense trunk on the same data and parameter count: +4.2 percent held-out loss (+12.7 percent on the answer span), and +9.6 percent with the hub_pull coupling. The disclosure labels it a negative result. Separately, a guard that carries 32,768 hub values as 9 residue units in 3 groups restores a bit-exact training step after a faulty unit, a faulty group or two units in two groups; four faulty units abstain and write nothing wrong; without the guard the step goes to NaN.",
+      "how_we_got_it": "Reported in docs/45-status-disclosure-2026-10-14.md section 45.3: RTX A6000, 18 minutes per arm, same data and total ternary parameters, device == host bit-identical in all arms. The harness and result files are not published in this release; this row reads the disclosure text.",
+      "use_in_your_work": "A caution against assuming a cyclone-shaped MLP beats dense at small scale; and a worked case for guard-protected training steps.",
+      "honest_limits": "Not independently reproducible from this repository. One model size, one 18-minute budget per arm: the disclosure says 'at this size', and larger or longer runs are not measured.",
+      "cpu_flags": [],
+      "corrections": []
+    },
+    {
+      "id": "D4",
+      "title": "Disclosure 45.7: dispatch that stops instead of failing over loses 0 productive dispatches on a 7-day replay",
+      "section": "docs/45-status-disclosure-2026-10-14.md § 45.7 Dispatch that stops instead of failing over",
+      "claim": "On a 7-day replay: 0 productive dispatches lost; lane choice explains only 6 of 145 wasted dispatches",
+      "kind": "file",
+      "verify": "python3 -c \"import sys;t=open('docs/45-status-disclosure-2026-10-14.md',encoding='utf-8').read();t=' '.join(t.split());m=['0 productive dispatches lost', 'lane choice explains only 6 of 145 wasted', 'within 14 days'];bad=[s for s in m if s not in t];print('MISSING',bad) if bad else print('OK: 45.7 replay numbers present');sys.exit(1 if bad else 0)\"",
+      "expect": "OK: 45.7 replay numbers present",
+      "evidence": [
+        "docs/45-status-disclosure-2026-10-14.md"
+      ],
+      "runtime_s": 1,
+      "needs": [
+        "python3"
+      ],
+      "what_it_means": "The rule: a failed task may move to another lane only if that lane produced an accepted result for the task's class within 14 days; otherwise it stops with its reason and is held, not re-dispatched. On a 7-day replay the rule would have lost none of the productive dispatches, and the replay showed lane choice explained only 6 of the 145 wasted dispatches (the rest were rate-limit retry loops, first-dispatch failures and re-dispatch after a productive result).",
+      "how_we_got_it": "Reported in docs/45-status-disclosure-2026-10-14.md section 45.7 from a replay over the author's own dispatch records; the replay data and harness are not published in this release, so this row reads the disclosure text.",
+      "use_in_your_work": "Agent-fleet schedulers: gate failover on evidence of recent success and report the wasted-work breakdown instead of blaming lane choice.",
+      "honest_limits": "Single fleet, 7 days, replay (not a live A/B). Not independently reproducible from this repository.",
+      "cpu_flags": [],
+      "corrections": []
+    },
+    {
+      "id": "D5",
+      "title": "Disclosure 45.8: speech core in exact forms is design only (NOT YET TESTED)",
+      "section": "docs/45-status-disclosure-2026-10-14.md § 45.8 A speech core in the same exact forms (design only)",
+      "claim": "Status: NOT YET TESTED; voice search in the browser currently runs on a separate local recogniser (whisper.cpp, 1.1 s speech-end to results)",
+      "kind": "file",
+      "verify": "python3 -c \"import sys;t=open('docs/45-status-disclosure-2026-10-14.md',encoding='utf-8').read();t=' '.join(t.split());m=['**Status:** NOT YET TESTED', 'whisper.cpp, 1.1 s speech-end to results', 'design only'];bad=[s for s in m if s not in t];print('MISSING',bad) if bad else print('OK: 45.8 declared NOT YET TESTED');sys.exit(1 if bad else 0)\"",
+      "expect": "OK: 45.8 declared NOT YET TESTED",
+      "evidence": [
+        "docs/45-status-disclosure-2026-10-14.md"
+      ],
+      "runtime_s": 1,
+      "needs": [
+        "python3"
+      ],
+      "what_it_means": "The corpus describes a whisper-like speech recogniser (number-theoretic-transform front end over the ring primes, ternary encoder, CTC head using the ring softmax) and says plainly that it has not been built or tested. The only measured speech number is for a different, existing recogniser (whisper.cpp, 1.1 s from speech end to results). This row exists so the design-only item is visible in the suite and is not mistaken for a result.",
+      "how_we_got_it": "Read from docs/45-status-disclosure-2026-10-14.md section 45.8; there is no harness and no result file.",
+      "use_in_your_work": "Nothing yet: treat it as a published design for prior art, to be judged when a measurement exists.",
+      "honest_limits": "No measurement of the proposed core exists. The 1.1 s figure belongs to whisper.cpp, not to the described design.",
+      "cpu_flags": [],
+      "corrections": []
+    }
+  ]
+}

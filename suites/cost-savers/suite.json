@@ -1,0 +1,225 @@
+{
+ "_about": {
+  "repo": "cost-savers",
+  "url": "https://github.com/SovRing-Labs/cost-savers",
+  "licence": "PolyForm Small Business 1.0.0 OR PolyForm Noncommercial 1.0.0 (your choice); PolyForm Free Trial 1.0.0 for evaluation; data and shard format CC-BY-4.0",
+  "status_file": "STATUS.md",
+  "generated": "2026-10-16",
+  "schema": 1,
+  "one_line": "Six OpenCode plugins and four CLI tools that cut what coding agents send to paid models, with a pre-registered paired A/B.",
+  "quicktest": "node --experimental-strip-types --test tests/test_*.mjs && python3 tests/test_fleet_token_baseline.py",
+  "quicktest_s": 15,
+  "source": "README.md, DOSSIER.md, Makefile, release-scan.txt, tests/*, ab/* (pre-registration, tasks, runs, result, RESULT.md)"
+ },
+ "tests": [
+  {
+   "id": "CS1",
+   "title": "Six OpenCode plugins: 6 test files pass (36 assertions)",
+   "claim": "'make test: 6 plugin test files (node:test, 36 assertions) + the token-baseline test, all pass' (DOSSIER). The plugins are minimal-system, context-gate, output-compact, context-trim, cloud-pacer and sanitize-cloud-payload.",
+   "kind": "run",
+   "verify": "N=node; v=$(node -p \"process.versions.node.split('.').slice(0,2).map(Number).reduce((a,b)=>a*1000+b)\" 2>/dev/null || echo 0); [ \"$v\" -ge 22006 ] || for c in \"$HOME\"/.nvm/versions/node/v2[2-9]*/bin/node /usr/local/bin/node; do [ -x \"$c\" ] && [ \"$($c -p \"process.versions.node.split('.').slice(0,2).map(Number).reduce((a,b)=>a*1000+b)\")\" -ge 22006 ] && N=$c && break; done; $N --experimental-strip-types --test tests/test_*.mjs 2>&1 | grep -E \"^# (tests|pass|fail)\" | tee /tmp/cs1.$$; grep -q \"^# pass 6\" /tmp/cs1.$$ && grep -q \"^# fail 0\" /tmp/cs1.$$; r=$?; rm -f /tmp/cs1.$$; exit $r",
+   "expect": "# tests 6, # pass 6, # fail 0",
+   "evidence": [
+    "DOSSIER.md",
+    "Makefile",
+    "tests/test_minimal_system.mjs",
+    "tests/test_output_compact.mjs"
+   ],
+   "runtime_s": 15,
+   "needs": [
+    "node >= 22.6 (needs --experimental-strip-types)"
+   ],
+   "cpu_flags": [],
+   "what_it_means": "Each plugin loads and its hooks behave on a sample: minimal-system replaces a verbose system prompt with one under 1000 characters containing 'Be direct and tool-driven'; output-compact collapses blank lines, truncates at 16,000 characters and names a grep hint for huge listings; context-trim caps history at 50 messages and each text part at 5,500 characters; context-gate redirects broad early file reads; cloud-pacer returns at once for local models and survives a rate-limit event; sanitize-cloud-payload strips an AWS key, a private-key header, DB artifact names and brand patterns. Passing shows the hooks work as coded. It does not show they save money in real use: that is the A/B (CS3 to CS6).",
+   "how_we_got_it": "tests/test_*.mjs (node:test), run with `node --experimental-strip-types --test tests/test_*.mjs` on Node v22.23.2 on this laptop on 2026-10-16: tests 6, pass 6, fail 0. The tests copy the .ts plugin to a temp file in /tmp and import it (the copy rewrites one import to `import type`). The assertion count of 36 was counted by grep over the six files: 4+6+5+6+8+7.",
+   "use_in_your_work": "Drop any one of the six plugins into your own OpenCode setup and run its test first: it shows exactly what the plugin changes in the prompt or the tool output.",
+   "honest_limits": "Needs Node 22.6 or newer: on Node 18.19.1 (the default on this laptop) the command fails with 'node: bad option: --experimental-strip-types'. The Makefile does not say this. The tests exercise hook behaviour with stubs, not a live OpenCode.",
+   "corrections": []
+  },
+  {
+   "id": "CS2",
+   "title": "Token-baseline tool test (fixture only)",
+   "claim": "The token-baseline test passes (DOSSIER: 'the token-baseline test, all pass').",
+   "kind": "run",
+   "verify": "T=$(mktemp -d); cp -a . \"$T/r\"; (cd \"$T/r\"; export PYTHONDONTWRITEBYTECODE=1; python3 tests/test_fleet_token_baseline.py) > \"$T/o\" 2>&1; rc=$?; tail -n 3 \"$T/o\"; grep -Eq 'fleet-token-baseline test passed' \"$T/o\" && [ $rc -eq 0 ]; r=$?; rm -rf \"$T\"; exit $r",
+   "expect": "[+] fleet-token-baseline test passed",
+   "evidence": [
+    "tests/test_fleet_token_baseline.py",
+    "bin/fleet-token-baseline"
+   ],
+   "runtime_s": 2,
+   "needs": [
+    "python3"
+   ],
+   "cpu_flags": [],
+   "what_it_means": "The test builds a one-row fake opencode.db and a fake dispatch.db and checks the row reads back with total 1500 tokens. Honestly, it asserts on the fixture it just wrote; it does not invoke bin/fleet-token-baseline. It proves SQLite fixtures can be built, not that the report tool is correct.",
+   "how_we_got_it": "tests/test_fleet_token_baseline.py, run with python3 on this laptop on 2026-10-16 in a temp copy: prints '[+] fleet-token-baseline test passed'. pytest also collects it: 1 passed.",
+   "use_in_your_work": "Do not rely on it as a gate for the report tool; if you adopt the tool, add a test that runs it against a fixture database and compares the printed totals.",
+   "honest_limits": "Weak coverage: the tool under test is never executed by this test.",
+   "corrections": []
+  },
+  {
+   "id": "CS3",
+   "title": "Pre-registered A/B verdict: PASS (median -89.3% fresh tokens, p = 0.0046, 16/16 vs 15/16)",
+   "claim": "'Pre-registered verdict PASS (median -89.3% fresh tokens in+out, p = 0.0046, success 16/16 vs 15/16)' on 16 paired tasks.",
+   "kind": "file",
+   "verify": "python3 - <<'PY'\nimport json\ns=json.load(open('ab/cost-savers-AB-v2.result.json'))['summary']\nassert s['n_pairs']==16 and s['PASS'] is True\nassert abs(s['median_reduction_P']-0.8934611)<1e-6 and abs(s['wilcoxon_p']-0.0045929)<1e-6\nassert s['success_A']==0.9375 and s['success_B']==1.0\nprint('PASS n=16 median_reduction_P=%.1f%% p=%.4f success A 15/16 B 16/16'%(s['median_reduction_P']*100,s['wilcoxon_p']))\nPY",
+   "expect": "PASS n=16 median_reduction_P=89.3% p=0.0046 success A 15/16 B 16/16",
+   "evidence": [
+    "ab/cost-savers-AB-v2.result.json",
+    "ab/cost-savers-AB-v2-RESULT.md",
+    "ab/cost-savers-AB-PREREG-v2.md"
+   ],
+   "runtime_s": 1,
+   "needs": [
+    "python3"
+   ],
+   "cpu_flags": [],
+   "what_it_means": "Across 16 short read-only questions, the arm with the six plugins used a median 89.3% fewer fresh tokens (input plus output) than the arm without, one-sided Wilcoxon p = 0.0046, and answered 16 of 16 correctly against 15 of 16. All three pre-registered criteria are met (20% reduction, p < 0.05, success within 5 points). The read-out is only the pre-registered metric; CS4 and CS5 hold the declared secondaries that qualify it.",
+   "how_we_got_it": "Pre-registration cost-savers-AB-PREREG-v2.md (2026-10-01, written before any run); frozen tasks ab/ab_v2_tasks.json; harness ab/run_ab_v2.py (32 runs shuffled with seed 20260929, opencode 1.18.33, model opencode/space-bunny-free, token counts read back from opencode's session database); analysis ab/analyze_ab_v2.py (needs scipy and the author's opencode.db) writes ab/cost-savers-AB-v2.result.json. This check re-reads that committed result file. CS6 recomputes the headline numbers from the run records.",
+   "use_in_your_work": "Use it as a template for how to test a cost tool honestly: write the tasks and the pass bar first, pair the runs, and publish the verdict whichever way it falls.",
+   "honest_limits": "Short read-only sessions on one free model; long sessions and other providers are untested (DOSSIER Limits).",
+   "corrections": []
+  },
+  {
+   "id": "CS4",
+   "title": "Negative qualifier: processed tokens including cache reads barely changed (-2.2%)",
+   "claim": "'All processed tokens incl. cache reads: 1,309,670 vs 1,280,506, -2.2% (median -0.07%)'; the fresh-token saving comes from provider prompt-cache hits, cause not isolated (RESULT.md, README, DOSSIER).",
+   "kind": "file",
+   "verify": "python3 - <<'PY'\nimport json\ns=json.load(open('ab/cost-savers-AB-v2.result.json'))['summary']\nassert s['sum_total_A']==1309670 and s['sum_total_B']==1280506\nch=s['sum_total_B']/s['sum_total_A']-1\nassert abs(ch+0.0223)<0.0001 and abs(s['median_reduction_total_incl_cache']+0.00073)<0.00001\nprint('total incl cache: %d -> %d (%.1f%%), median %.2f%%'%(s['sum_total_A'],s['sum_total_B'],ch*100,s['median_reduction_total_incl_cache']*100*-1*-1))\nPY",
+   "expect": "total incl cache: 1309670 -> 1280506 (-2.2%), median -0.07%",
+   "evidence": [
+    "ab/cost-savers-AB-v2.result.json",
+    "ab/cost-savers-AB-v2-RESULT.md",
+    "README.md"
+   ],
+   "runtime_s": 1,
+   "needs": [
+    "python3"
+   ],
+   "cpu_flags": [],
+   "what_it_means": "Adding the tokens served from the provider's cache, both arms processed about the same amount of context: 1,309,670 without the plugins, 1,280,506 with them, a 2.2% sum reduction and 0.07% median. So the 89.3% headline is a saving in fresh (non-cached) tokens, which providers usually bill at a higher rate than cache reads; it is not a smaller context. RESULT.md says the plugins may keep the prompt prefix stable, or run order may have warmed the cache, and the design cannot tell which.",
+   "how_we_got_it": "Same result file as CS3 (the secondary fields sum_total_A, sum_total_B and median_reduction_total_incl_cache), computed by ab/analyze_ab_v2.py from cache-read counts in opencode's session table. RESULT.md adds a billing illustration, explicitly not a measurement: at a cache-read price of 10% of fresh input, billed tokens would be A about 486,000 vs B about 284,000 (about -42%).",
+   "use_in_your_work": "Before you quote a token saving, ask which tokens: fresh, cached or total. Your bill depends on the price of each.",
+   "honest_limits": "A negative-leaning result kept on purpose. A randomised-cache long-session A/B is listed in the DOSSIER as the planned next measurement; it has not been run.",
+   "corrections": []
+  },
+  {
+   "id": "CS5",
+   "title": "Negative qualifier: the plugin arm was slower (median 31.2 s vs 12.0 s)",
+   "claim": "'Median wall time per task: 12.0 s without, 31.2 s with the plugins - B slower' (RESULT.md, README: 'slower (pacing)').",
+   "kind": "file",
+   "verify": "python3 - <<'PY'\nimport json\ns=json.load(open('ab/cost-savers-AB-v2.result.json'))['summary']\nassert s['median_wall_A']==12.0 and s['median_wall_B']==31.15\nprint('median wall A %.1f s, B %.1f s'%(s['median_wall_A'],s['median_wall_B']))\nPY",
+   "expect": "median wall A 12.0 s, B 31.1 s",
+   "evidence": [
+    "ab/cost-savers-AB-v2.result.json",
+    "ab/cost-savers-AB-v2-RESULT.md",
+    "README.md"
+   ],
+   "runtime_s": 1,
+   "needs": [
+    "python3"
+   ],
+   "cpu_flags": [],
+   "what_it_means": "With the plugins on, a typical task took 31.15 s against 12.0 s. The RESULT.md reads this as consistent with cloud-pacer, which deliberately delays requests; the DOSSIER says 'cloud-pacer deliberately slows requests'. The A/B does not separate pacing from the other plugins' effects, so the cause is the authors' reading, not a measured attribution.",
+   "how_we_got_it": "From the same 32 recorded runs (wall_s per run in ab/cost-savers-AB-v2.runs.jsonl), medians computed by ab/analyze_ab_v2.py into the result file. The README rounds 31.15 to 31.2.",
+   "use_in_your_work": "If you use the pacer for free-tier or rate-limited providers, expect a latency cost; leave it out for local models.",
+   "honest_limits": "Latency here was measured on a free model with provider-side variance; no repeat of the timing is recorded.",
+   "corrections": []
+  },
+  {
+   "id": "CS6",
+   "title": "Independent recomputation of the A/B headline from the 32 run records (stdlib only)",
+   "claim": "The headline numbers (sums 394,512 and 173,138; median reduction 89.3%; one-sided Wilcoxon p = 0.0046; success 15/16 and 16/16) follow from the committed per-run records, not only from the committed summary.",
+   "kind": "run",
+   "verify": "python3 - <<'PY'\nimport json, statistics\nruns=[json.loads(l) for l in open('ab/cost-savers-AB-v2.runs.jsonl')]\nby={}\nfor r in runs: by.setdefault(r['task'],{})[r['arm']]=r\npairs=[(d['A'],d['B']) for t,d in sorted(by.items()) if 'A' in d and 'B' in d and d['A'].get('tokens_in') is not None and d['B'].get('tokens_in') is not None]\nP=lambda r:r['tokens_in']+r['tokens_out']\nsa=sum(P(a) for a,b in pairs); sb=sum(P(b) for a,b in pairs)\nmed=statistics.median((P(a)-P(b))/P(a) for a,b in pairs)\nnz=[P(a)-P(b) for a,b in pairs if P(a)!=P(b)]\norder=sorted(range(len(nz)),key=lambda i:abs(nz[i]))\nrk=[0]*len(nz); i=0\nwhile i<len(order):\n    j=i\n    while j+1<len(order) and abs(nz[order[j+1]])==abs(nz[order[i]]): j+=1\n    for k in range(i,j+1): rk[order[k]]=(i+j)/2+1\n    i=j+1\nwp=sum(r for r,d in zip(rk,nz) if d>0)\ncnt=sum(1 for m in range(2**len(nz)) if sum(rk[k] for k in range(len(nz)) if m>>k&1)>=wp-1e-9)\np=cnt/2**len(nz)\nsA=sum(a['success'] for a,b in pairs); sB=sum(b['success'] for a,b in pairs)\nassert (len(pairs),sa,sb,sA,sB)==(16,394512,173138,15,16) and abs(med-0.8934611)<1e-6 and abs(p-0.0046)<0.0001\nprint('recomputed: n=%d sumP %d -> %d, median reduction %.1f%%, exact one-sided Wilcoxon p=%.4f, success %d/16 vs %d/16'%(len(pairs),sa,sb,med*100,p,sA,sB))\nPY",
+   "expect": "recomputed: n=16 sumP 394512 -> 173138, median reduction 89.3%, exact one-sided Wilcoxon p=0.0046, success 15/16 vs 16/16",
+   "evidence": [
+    "ab/cost-savers-AB-v2.runs.jsonl",
+    "ab/analyze_ab_v2.py",
+    "ab/cost-savers-AB-v2-RESULT.md"
+   ],
+   "runtime_s": 5,
+   "needs": [
+    "python3"
+   ],
+   "cpu_flags": [],
+   "what_it_means": "Starting from the 32 raw run records (arm, tokens in/out, success), pairing by task and computing the pre-registered statistic reproduces the sums, the 89.3% median reduction and the one-sided Wilcoxon p-value (here as an exact enumeration of the signed-rank sums, without scipy; it matches scipy's 0.0046 to four places). So the verdict does not depend on trusting the summary file. It still depends on the run records being what the harness wrote; the token counts themselves came from opencode's session database on the author's machine, which is not in the repo.",
+   "how_we_got_it": "Pure python3 over ab/cost-savers-AB-v2.runs.jsonl (32 lines, 16 tasks x 2 arms). The authors' analysis script is ab/analyze_ab_v2.py (scipy.stats.wilcoxon and the opencode.db for cache reads); this check replaces both with stdlib arithmetic and does not need the database. Written for this suite record on 2026-10-16.",
+   "use_in_your_work": "A model of an auditable result: keep every raw run, and let a reader recompute the headline in a few seconds.",
+   "honest_limits": "Re-derives the statistic only; cannot re-check that tokens were counted correctly at run time or re-run the agent.",
+   "corrections": []
+  },
+  {
+   "id": "CS7",
+   "title": "A/B integrity: 16 frozen tasks, 32 runs, fixed shuffle seed, pre-registered before the runs",
+   "claim": "Pre-registration written before any run; 16 frozen read-only questions; 32 runs shuffled with seed 20260929 (ab/README.md).",
+   "kind": "file",
+   "verify": "python3 - <<'PY'\nimport json\nt=json.load(open('ab/ab_v2_tasks.json'))\nruns=[l for l in open('ab/cost-savers-AB-v2.runs.jsonl') if l.strip()]\nassert len(t)==16 and all('expect' in x and 'prompt' in x for x in t) and len(runs)==32\nassert '20260929' in open('ab/run_ab_v2.py').read()\nassert 'written BEFORE any run' in open('ab/cost-savers-AB-PREREG-v2.md').read()\nprint('16 tasks, 32 runs, seed 20260929, prereg says written BEFORE any run')\nPY",
+   "expect": "16 tasks, 32 runs, seed 20260929, prereg says written BEFORE any run",
+   "evidence": [
+    "ab/ab_v2_tasks.json",
+    "ab/cost-savers-AB-v2.runs.jsonl",
+    "ab/run_ab_v2.py",
+    "ab/cost-savers-AB-PREREG-v2.md"
+   ],
+   "runtime_s": 1,
+   "needs": [
+    "python3"
+   ],
+   "cpu_flags": [],
+   "what_it_means": "The files that make the experiment checkable are all there and agree on size: 16 questions with expected answers, 32 recorded runs, a harness with the shuffle seed, and a pre-registration that states it was written before any run. This shows the design was fixed in advance on paper; it cannot prove the timing of the pre-registration, which rests on the committed text and the git history.",
+   "how_we_got_it": "ab/README.md lists the files; reproduction needs the author's opencode config, a clone of the Omnitool repo at /tmp/ab/repo and a working opencode with the free model (not re-run here; billable-free but network-bound).",
+   "use_in_your_work": "Copy the structure for your own A/B: tasks, expected answers, seed, pass bar, runs.",
+   "honest_limits": "Re-running the A/B needs OpenCode, network and the same free model; the model may no longer be offered.",
+   "corrections": []
+  },
+  {
+   "id": "CS8",
+   "title": "Withdrawn earlier figures stay withdrawn (simulated Arm B on 09-29)",
+   "claim": "'An A/B result was produced by a script that simulated Arm B; caught on 10-01 and withdrawn'; the earlier figures (1,893,904,352 characters saved, 64.1%, p < 0.001, ...) 'appear in no data file, script or log in the repository' (DOSSIER, RESULT.md).",
+   "kind": "file",
+   "verify": "grep -q 'simulated Arm B' DOSSIER.md && grep -q 'Earlier figures withdrawn' ab/cost-savers-AB-v2-RESULT.md && grep -q 'are withdrawn' ab/cost-savers-AB-v2-RESULT.md && n=$(grep -rIl --exclude-dir=.git --exclude=cost-savers-AB-v2-RESULT.md -e '1,893,904,352' -e '64.1%' . | wc -l) && [ \"$n\" -eq 0 ] && echo 'withdrawn figures appear only in the withdrawal note'",
+   "expect": "withdrawn figures appear only in the withdrawal note",
+   "evidence": [
+    "DOSSIER.md",
+    "ab/cost-savers-AB-v2-RESULT.md",
+    "ab/cost-savers-AB-PREREG-v2.md"
+   ],
+   "runtime_s": 1,
+   "needs": [
+    "bash",
+    "grep"
+   ],
+   "cpu_flags": [],
+   "what_it_means": "The earlier 64.1% / 1.89-billion-character claim is not in the repo as a result; it is named once, in the RESULT.md withdrawal note, as untraceable and withdrawn, and the pre-registration records that the 09-29 result came from a script that simulated the treatment arm. The check confirms no other file still carries those numbers. It does not confirm that nobody quoted them elsewhere before the withdrawal.",
+   "how_we_got_it": "DOSSIER creation-history rows 09-29 and 10-01, the pre-registration's 'Supersedes' paragraph and RESULT.md's last section; the grep is run over the whole clone.",
+   "use_in_your_work": "A reminder to withdraw a bad number in public, in writing, with a reason.",
+   "honest_limits": "The withdrawn script (run_ab_eval.py) is not shipped, so the simulation itself cannot be inspected here.",
+   "corrections": []
+  },
+  {
+   "id": "CS9",
+   "title": "Release scan: no leaks, no development paths, nothing vendored",
+   "claim": "gitleaks 8.24.0: no leaks found; home-directory paths: 0; vendored third-party sources: none (release-scan.txt).",
+   "kind": "file",
+   "verify": "grep -q 'no leaks found' release-scan.txt && grep -q 'machine (grep -rn over the tree): 0' release-scan.txt && ! grep -rIl --exclude-dir=.git --exclude=release-scan.txt -E '/home/[a-z]+/' . && echo 'scan recorded; no /home/<user>/ path in the tree'",
+   "expect": "scan recorded; no /home/<user>/ path in the tree",
+   "evidence": [
+    "release-scan.txt",
+    "PROVENANCE.md"
+   ],
+   "runtime_s": 2,
+   "needs": [
+    "bash",
+    "grep"
+   ],
+   "cpu_flags": [],
+   "what_it_means": "The committed scan reports no secrets and no developer paths, and the path grep is re-run on the clone. gitleaks itself is not re-run.",
+   "how_we_got_it": "release-scan.txt (gitleaks 8.24.0, `detect --no-git -s . --redact`; its make-test line is dated 2026-09-29).",
+   "use_in_your_work": "Run both checks on your own plugin repo before you publish.",
+   "honest_limits": "Only the grep is re-run.",
+   "corrections": []
+  }
+ ]
+}
