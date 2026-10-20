@@ -1,0 +1,212 @@
+{
+  "_about": {
+    "repo": "armilla-defense",
+    "url": "https://github.com/SovRing-Labs/armilla-defense",
+    "one_line": "Signed input lanes, watch-only socket gates and redundant-residue fault sensing.",
+    "quicktest": "python3 tests/local_demo.py lanes",
+    "quicktest_s": 10,
+    "licence": "PolyForm Small Business 1.0.0 OR PolyForm Noncommercial 1.0.0 OR PolyForm Free Trial 1.0.0 (code); CC BY 4.0 (documents)",
+    "status_file": "STATUS.md",
+    "generated": "2026-10-17",
+    "schema": 1
+  },
+  "tests": [
+    {
+      "id": "S1",
+      "title": "Unsigned data and signed/tampered/revoked provenance",
+      "claim": "Unsigned data and signed/tampered/revoked provenance",
+      "kind": "run",
+      "verify": "python3 tests/local_demo.py lanes",
+      "expect": "PASS (exit 0)",
+      "evidence": [
+        "results/2026-10-17-S1.log"
+      ],
+      "runtime_s": 30,
+      "needs": [
+        "python3",
+        "cryptography (oracle test)"
+      ],
+      "cpu_flags": [],
+      "what_it_means": "Signed input lanes, watch-only socket gates and redundant-residue fault sensing.",
+      "how_we_got_it": "Isolated harness on Intel i5-8365U laptop, 2026-10-17; output in evidence.",
+      "use_in_your_work": "Recheck on your own temporary files and services before integrating.",
+      "honest_limits": "No security audit, conversions not constant-time, no security claim. Signatures establish provenance, not benign intent or humanity. Replay/freshness policy is not enforced by this reference. Fences are text, not a model isolation boundary. Vault blind analytics, federated Sentinel, Seal DRM and production router enforcement remain research. Keyed check slots are not cryptographic signatures and are not implemented in this bundle.",
+      "corrections": []
+    },
+    {
+      "id": "S2",
+      "title": "Ed25519 oracle and RFC vectors",
+      "claim": "Ed25519 oracle and RFC vectors",
+      "kind": "run",
+      "verify": "python3 tests/local_demo.py greenmark",
+      "expect": "PASS (exit 0)",
+      "evidence": [
+        "results/2026-10-17-S2.log"
+      ],
+      "runtime_s": 30,
+      "needs": [
+        "python3",
+        "cryptography (oracle test)"
+      ],
+      "cpu_flags": [],
+      "what_it_means": "Signed input lanes, watch-only socket gates and redundant-residue fault sensing.",
+      "how_we_got_it": "Isolated harness on Intel i5-8365U laptop, 2026-10-17; output in evidence.",
+      "use_in_your_work": "Recheck on your own temporary files and services before integrating.",
+      "honest_limits": "No security audit, conversions not constant-time, no security claim. Signatures establish provenance, not benign intent or humanity. Replay/freshness policy is not enforced by this reference. Fences are text, not a model isolation boundary. Vault blind analytics, federated Sentinel, Seal DRM and production router enforcement remain research. Keyed check slots are not cryptographic signatures and are not implemented in this bundle.",
+      "corrections": []
+    },
+    {
+      "id": "S3",
+      "title": "Scratch Unix watch-only and signed-only default-deny",
+      "claim": "Scratch Unix watch-only and signed-only default-deny",
+      "kind": "run",
+      "verify": "python3 tests/local_demo.py ugate",
+      "expect": "PASS (exit 0)",
+      "evidence": [
+        "results/2026-10-17-S3.log"
+      ],
+      "runtime_s": 30,
+      "needs": [
+        "python3",
+        "cryptography (oracle test)"
+      ],
+      "cpu_flags": [],
+      "what_it_means": "Signed input lanes, watch-only socket gates and redundant-residue fault sensing.",
+      "how_we_got_it": "Isolated harness on Intel i5-8365U laptop, 2026-10-17; output in evidence.",
+      "use_in_your_work": "Recheck on your own temporary files and services before integrating.",
+      "honest_limits": "No security audit, conversions not constant-time, no security claim. Signatures establish provenance, not benign intent or humanity. Replay/freshness policy is not enforced by this reference. Fences are text, not a model isolation boundary. Vault blind analytics, federated Sentinel, Seal DRM and production router enforcement remain research. Keyed check slots are not cryptographic signatures and are not implemented in this bundle.",
+      "corrections": []
+    },
+    {
+      "id": "S4",
+      "title": "Scratch TCP watch-only tiers, rate and rhythm",
+      "claim": "Scratch TCP watch-only tiers, rate and rhythm",
+      "kind": "run",
+      "verify": "python3 tests/local_demo.py gate",
+      "expect": "PASS (exit 0)",
+      "evidence": [
+        "results/2026-10-17-S4.log"
+      ],
+      "runtime_s": 30,
+      "needs": [
+        "python3",
+        "cryptography (oracle test)"
+      ],
+      "cpu_flags": [],
+      "what_it_means": "Signed input lanes, watch-only socket gates and redundant-residue fault sensing.",
+      "how_we_got_it": "Isolated harness on Intel i5-8365U laptop, 2026-10-17; output in evidence.",
+      "use_in_your_work": "Recheck on your own temporary files and services before integrating.",
+      "honest_limits": "No security audit, conversions not constant-time, no security claim. Signatures establish provenance, not benign intent or humanity. Replay/freshness policy is not enforced by this reference. Fences are text, not a model isolation boundary. Vault blind analytics, federated Sentinel, Seal DRM and production router enforcement remain research. Keyed check slots are not cryptographic signatures and are not implemented in this bundle.",
+      "corrections": []
+    },
+    {
+      "id": "S5",
+      "title": "Historical guard faults: PASS, zero silent wrong",
+      "claim": "Historical guard faults: PASS, zero silent wrong",
+      "kind": "file",
+      "verify": "python3 -c \"import json; d=json.load(open('results/guard_demo.result.json')); assert d['verdict']=='PASS' and all(x['silent_wrong']==0 for x in d['jobs'].values()); print('PASS')\"",
+      "expect": "PASS (exit 0)",
+      "evidence": [
+        "results/guard_demo.result.json"
+      ],
+      "runtime_s": 30,
+      "needs": [
+        "python3",
+        "cryptography (oracle test)"
+      ],
+      "cpu_flags": [],
+      "what_it_means": "Signed input lanes, watch-only socket gates and redundant-residue fault sensing.",
+      "how_we_got_it": "Isolated harness on Intel i5-8365U laptop, 2026-10-17; output in evidence.",
+      "use_in_your_work": "Recheck on your own temporary files and services before integrating.",
+      "honest_limits": "No security audit, conversions not constant-time, no security claim. Signatures establish provenance, not benign intent or humanity. Replay/freshness policy is not enforced by this reference. Fences are text, not a model isolation boundary. Vault blind analytics, federated Sentinel, Seal DRM and production router enforcement remain research. Keyed check slots are not cryptographic signatures and are not implemented in this bundle.",
+      "corrections": []
+    },
+    {
+      "id": "S6",
+      "title": "External redundant-RNS fault demo",
+      "claim": "External redundant-RNS fault demo",
+      "kind": "external",
+      "verify": "python3 experiments/guard_events/guard_demo.py",
+      "expect": "PASS (exit 0)",
+      "evidence": [
+        "results/guard_demo.result.json"
+      ],
+      "runtime_s": 30,
+      "needs": [
+        "needs SovRing-Labs/armilla-astrolabe"
+      ],
+      "cpu_flags": [],
+      "what_it_means": "Signed input lanes, watch-only socket gates and redundant-residue fault sensing.",
+      "how_we_got_it": "Isolated harness on Intel i5-8365U laptop, 2026-10-17; output in evidence.",
+      "use_in_your_work": "Recheck on your own temporary files and services before integrating.",
+      "honest_limits": "No security audit, conversions not constant-time, no security claim. Signatures establish provenance, not benign intent or humanity. Replay/freshness policy is not enforced by this reference. Fences are text, not a model isolation boundary. Vault blind analytics, federated Sentinel, Seal DRM and production router enforcement remain research. Keyed check slots are not cryptographic signatures and are not implemented in this bundle.",
+      "corrections": []
+    },
+    {
+      "id": "S7",
+      "title": "No audit or constant-time conversion claim",
+      "claim": "No audit or constant-time conversion claim",
+      "kind": "file",
+      "verify": "python3 -c \"assert 'No security audit, conversions not constant-time, no security claim' in open('STATUS.md').read(); print('PASS')\"",
+      "expect": "PASS (exit 0)",
+      "evidence": [
+        "STATUS.md"
+      ],
+      "runtime_s": 30,
+      "needs": [
+        "python3",
+        "cryptography (oracle test)"
+      ],
+      "cpu_flags": [],
+      "what_it_means": "Signed input lanes, watch-only socket gates and redundant-residue fault sensing.",
+      "how_we_got_it": "Isolated harness on Intel i5-8365U laptop, 2026-10-17; output in evidence.",
+      "use_in_your_work": "Recheck on your own temporary files and services before integrating.",
+      "honest_limits": "No security audit, conversions not constant-time, no security claim. Signatures establish provenance, not benign intent or humanity. Replay/freshness policy is not enforced by this reference. Fences are text, not a model isolation boundary. Vault blind analytics, federated Sentinel, Seal DRM and production router enforcement remain research. Keyed check slots are not cryptographic signatures and are not implemented in this bundle.",
+      "corrections": []
+    },
+    {
+      "id": "FINDINGS1",
+      "title": "2026-10-17 portable Armilla subset",
+      "claim": "Selected relocated own-source APIs and tiny independent oracles pass; full research/science remains separate.",
+      "kind": "run",
+      "verify": "OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python3 findings/smoke.py",
+      "expect": "PASS",
+      "evidence": [
+        "FINDINGS-2026-10-17.md",
+        "findings/LINEAGE.json",
+        "findings/smoke.py"
+      ],
+      "runtime_s": 20,
+      "needs": [
+        "python3",
+        "cryptography (independent blackbox oracle)"
+      ],
+      "cpu_flags": [],
+      "what_it_means": "Runs source-only controls on synthetic public values with no private corpus, secret key files or research tree imports.",
+      "how_we_got_it": "2026-10-17 isolated temporary staging; selected exact own-source runtimes, explicit relocation/extraction in LINEAGE.json; result bound to authored hashes.",
+      "use_in_your_work": "Inspect and rerun the small typed API boundaries before adapting them to your own public inputs.",
+      "honest_limits": "Portable smoke is not all1364/2018/5482/62396 checks; no security, FHE, production deployment, acoustic accuracy or speed claim."
+    },
+    {
+      "id": "FINDINGS2",
+      "title": "Full frozen research gates are external",
+      "claim": "Historical hybrid5482, wave2018 and HE1364 have scoped independent review; audio62396 is worker engineering evidence only.",
+      "kind": "external",
+      "verify": "echo \"EXTERNAL: original frozen research workspace, source pins and fixture prerequisites required; portable subset is FINDINGS1\"",
+      "expect": "EXTERNAL",
+      "evidence": [
+        "FINDINGS-2026-10-17.md",
+        "findings/LINEAGE.json"
+      ],
+      "runtime_s": 240,
+      "needs": [
+        "external frozen research workspace and explicit fixture prerequisites"
+      ],
+      "cpu_flags": [],
+      "what_it_means": "This release does not execute the full original gates or reproduce scientific measurements.",
+      "how_we_got_it": "Original gate identity and report SHA256 are preserved in findings/LINEAGE.json, with review scope.",
+      "use_in_your_work": "Use the portable subset locally; obtain separately authorized prerequisites for full research reproduction.",
+      "honest_limits": "Audio scientific accuracy/speed/compression targets remain negative; public polynomial toy is not FHE; no deployment/security promotion."
+    }
+  ]
+}

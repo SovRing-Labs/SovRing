@@ -1,0 +1,249 @@
+{
+  "_about": {
+    "repo": "liquid-armilla",
+    "url": "https://github.com/SovRing-Labs/liquid-armilla",
+    "one_line": "A liquid ternary reservoir (N=1024, K=16, ternary recurrent weights, trained ridge readout) in plain-integer form and in ring-state form: state as residues on 15 rings with a 2-of-3 vote per tick, readout plate as 12-bit integers on 12 rings; compiled AVX2 kernel, exactness, fault and identity harnesses, and the negative results.",
+    "quicktest": "T=$(mktemp -d) && cp liq-armilla/fault_kernel_test.py liq-armilla/ring_kernel.py liq-armilla/ring_kernel.c $T/ && (cd $T && python3 fault_kernel_test.py | tail -3)",
+    "quicktest_s": 25,
+    "licence": "PolyForm Small Business 1.0.0 OR PolyForm Noncommercial 1.0.0 (+ PolyForm Free Trial 1.0.0); documents CC BY 4.0",
+    "status_file": "STATUS.md",
+    "generated": "2026-10-16",
+    "schema": 1,
+    "stage": "pre-alpha, about 30 %",
+    "source": "liq-armilla/*.py and ring_kernel.c; L1-L5 re-run on 2026-10-16 on an Intel i5-8365U laptop (AVX2), logs in results/runs/; L6-L7 re-check result files from 2026-10-14; L8 needs data that is not shipped"
+  },
+  "tests": [
+    {
+      "id": "L1",
+      "title": "The compiled 15-ring tick equals the plain integer twin, clean and with injected faults",
+      "claim": "1024 neurons x 16 nonzeros, 96 ticks, 64 sequences: 0 mismatches vs the integer twin with no faults, with 3,105 and with 6,144 wrong residues injected",
+      "kind": "run",
+      "verify": "T=$(mktemp -d) && cp liq-armilla/ring_kernel.py liq-armilla/ring_kernel.c liq-armilla/fault_kernel_test.py $T/ && (cd $T && python3 fault_kernel_test.py >/dev/null && python3 -c '\nimport json\nd=json.load(open(\"kernel-v2-test.json\"))\nassert all(v[\"mismatches_vs_twin\"]==0 for v in d.values()) and d[\"fault_p1.0\"][\"faults_injected\"]==6144\nprint(\"ring-kernel-exact\")')",
+      "expect": "ring-kernel-exact",
+      "evidence": [
+        "results/runs/2026-10-16-fault_kernel_test.log",
+        "liq-armilla/fault_kernel_test.py",
+        "liq-armilla/ring_kernel.c",
+        "liq-armilla/ring_kernel.py"
+      ],
+      "runtime_s": 15,
+      "needs": [
+        "python3 with numpy",
+        "gcc with AVX2 and OpenMP"
+      ],
+      "cpu_flags": [
+        "avx2"
+      ],
+      "what_it_means": "The reservoir's state is held as remainders on 15 small primes, three groups of five. A fused C kernel does the whole tick (ternary adds on every ring, decode, vote, leak, clip, re-encode). The test runs the same reservoir in ordinary integers and compares every final state value, then flips random remainders during the run (one wrong residue in a random neuron of a fraction of the sequences at every tick) and compares again. Zero differences in all three runs means the vote repairs a single wrong residue before it spreads.",
+      "how_we_got_it": "liq-armilla/fault_kernel_test.py compiles liq-armilla/ring_kernel.c (gcc -O3 -mavx2 -fopenmp, built by ring_kernel.py next to the copy in a temp dir) and runs it; log in results/runs/2026-10-16-fault_kernel_test.log (19.5 s, Intel i5-8365U laptop, 2026-10-16).",
+      "use_in_your_work": "Use the ring form as a drop-in exact reservoir tick where a silent wrong bit is unacceptable and you can pay a slower tick (see L4).",
+      "honest_limits": "Single residue faults per neuron per tick only: if two groups are corrupted in the same neuron in the same tick the kernel counts the neuron but does not detect the missing majority (only the readout plate path does). Seeded random wiring, not a trained model."
+    },
+    {
+      "id": "L2",
+      "title": "Full-size ring reservoir in NumPy: equals the twin, batch-split independent, and survives vote-repaired faults",
+      "claim": "N=1024 K=16, 96 ticks, 32 sequences, state on 50 rings: 0 mismatches vs the twin; one state hash for batch sizes 4, 16, 32 and the twin; 1,529 faults injected, 6,996 values repaired, 0 final mismatches; with the vote off 29,408 final mismatches",
+      "kind": "run",
+      "verify": "T=$(mktemp -d) && cp liq-armilla/ring_reservoir.py $T/ && (cd $T && python3 ring_reservoir.py >/dev/null && python3 -c '\nimport json\nd=json.load(open(\"g2g4-ring-reservoir.json\"))\nassert d[\"G2_mismatches_vs_integer_twin\"]==0 and d[\"G3_bit_identical\"] and d[\"G4_final_mismatches_with_faults\"]==0 and d[\"G4_control_no_vote_final_mismatches\"]>0\nprint(\"ring-reservoir-exact\")')",
+      "expect": "ring-reservoir-exact",
+      "evidence": [
+        "results/runs/2026-10-16-ring_reservoir.log",
+        "results/lineage-2026-10-14/g2g4-ring-reservoir.json",
+        "liq-armilla/ring_reservoir.py"
+      ],
+      "runtime_s": 135,
+      "needs": [
+        "python3 with numpy"
+      ],
+      "cpu_flags": [],
+      "what_it_means": "The first, slow, pure-NumPy version of the ring reservoir on 50 rings. It is the reference for the idea: the same recurrence computed on residues, three disjoint 5-ring groups reading the value and voting. The control run (no vote) shows the injected faults really do corrupt the result, so the zero is the vote's doing.",
+      "how_we_got_it": "liq-armilla/ring_reservoir.py in a temp dir; log results/runs/2026-10-16-ring_reservoir.log (230 s on a loaded laptop, 130 s through the suite runner; the 2026-10-14 file has the same hashes and fault counts).",
+      "use_in_your_work": "Read this file to understand the mechanism before the compiled kernel; use its hash to check a port.",
+      "honest_limits": "Slow (about 35k neuron updates/s here); a seeded wiring with synthetic drives; the fault counts are from a fixed random seed."
+    },
+    {
+      "id": "L3",
+      "title": "State hash is identical under relabelling, summation order, a fresh single-thread process; growth by neurons and rings keeps the old state",
+      "claim": "same final-state hash 8f9eef9d5d777483 for the base run, permuted neurons, reversed sum order and a one-thread fresh process; +256 neurons: old block bit-identical; +2 rings (50 -> 52): old residues unchanged, range 311 -> 326 bits",
+      "kind": "run",
+      "verify": "T=$(mktemp -d) && cp liq-armilla/g3_g5.py $T/ && (cd $T && python3 g3_g5.py >/dev/null && python3 -c '\nimport json\nd=json.load(open(\"g3-g5.json\"))\nassert d[\"base_state_hash\"]==\"8f9eef9d5d777483\" and d[\"G3a_identical\"] and d[\"G3b_reversed_k_order_identical\"] and d[\"G3c_identical\"] and d[\"G5a_old_block_bit_identical_after_growth\"] and d[\"G5b_old_residues_unchanged_with_two_more_rings\"]\nprint(\"identity-and-growth\")')",
+      "expect": "identity-and-growth",
+      "evidence": [
+        "results/runs/2026-10-16-g3_g5.log",
+        "results/lineage-2026-10-14/g3-g5.json",
+        "liq-armilla/g3_g5.py"
+      ],
+      "runtime_s": 150,
+      "needs": [
+        "python3 with numpy"
+      ],
+      "cpu_flags": [],
+      "what_it_means": "An exact system gives the same bits however you compute it. The test relabels the neurons, adds the 16 terms in the opposite order and runs in a new process with one thread, and compares a hash of the final state with the base run. Then it grows the network: new neurons read the old ones but are not read by them, and two extra rings are added; the old part must not change.",
+      "how_we_got_it": "liq-armilla/g3_g5.py in a temp dir (it writes its helper module and result beside itself); log results/runs/2026-10-16-g3_g5.log (62 s).",
+      "use_in_your_work": "A result you can hash and compare across machines, or a network you can extend without retraining the old part.",
+      "honest_limits": "One physical machine only: identity on a second host is NOT tested. Growth was tested on the 50-ring NumPy path, not on the compiled 15-ring kernel."
+    },
+    {
+      "id": "L4",
+      "title": "Negative: the ring kernel is slower than a plain-integer AVX2 kernel",
+      "claim": "same mesh, bitwise-equal outputs: ring kernel 59-65 M updates/s, scalar plain C 41-48, batch-vectorised plain-integer AVX2 C 366-600 (three runs); the ring kernel loses to the best plain kernel",
+      "kind": "run",
+      "verify": "T=$(mktemp -d) && cp liq-armilla/ring_kernel.py liq-armilla/ring_kernel.c liq-armilla/plain_kernel.c liq-armilla/bench_plain.py $T/ && (cd $T && gcc -O3 -mavx2 -fopenmp -shared -fPIC -o libplaink.so plain_kernel.c && python3 bench_plain.py | python3 -c '\nimport ast,sys\nd=ast.literal_eval(sys.stdin.read().strip().splitlines()[-1])\nassert d[\"three_agree_bitwise\"] and d[\"plain_simd_C_M_upd_s\"]>d[\"ring_kernel_M_upd_s\"]\nprint(\"ring-slower-than-plain-simd\")')",
+      "expect": "ring-slower-than-plain-simd",
+      "evidence": [
+        "results/runs/2026-10-16-bench_plain.log",
+        "results/lineage-2026-10-14/bench-plain.json",
+        "liq-armilla/bench_plain.py",
+        "liq-armilla/plain_kernel.c"
+      ],
+      "runtime_s": 25,
+      "needs": [
+        "python3 with numpy",
+        "gcc with AVX2 and OpenMP"
+      ],
+      "cpu_flags": [
+        "avx2"
+      ],
+      "what_it_means": "Three programs compute the same reservoir ticks and agree bit for bit: a plain scalar C loop, a plain integer loop vectorised across sequences (16 per AVX2 op), and the ring kernel. The test passes when the plain vectorised kernel is faster than the ring kernel, i.e. when the negative result reproduces. The ring form buys exactness, fault repair and reproducible growth, not speed.",
+      "how_we_got_it": "liq-armilla/bench_plain.py with liq-armilla/plain_kernel.c built into a temp dir; log results/runs/2026-10-16-bench_plain.log (three repeats). The 2026-10-14 file measured 4-5x; the 2026-10-16 repeats here measured 6-10x.",
+      "use_in_your_work": "Choose the plain integer form when you need speed; choose the ring form when you need the properties in L1-L3.",
+      "honest_limits": "Speed depends on machine load (numbers vary 2x between runs on a busy laptop); one CPU (Intel i5-8365U); the plain kernel here is the author's own, a tuned library may differ."
+    },
+    {
+      "id": "L5",
+      "title": "Negative: rotating rings alone hold no memory (memory capacity 0.0 vs 13.9 for the ternary mesh)",
+      "claim": "linear memory capacity (recall of the input k steps back, k=1..60, 100 features each): ternary tanh reservoir 13.88; three ring-only variants 0.0",
+      "kind": "run",
+      "verify": "T=$(mktemp -d) && cp liq-armilla/r3_probe.py $T/ && (cd $T && python3 r3_probe.py >/dev/null && python3 -c '\nimport json\nd=json.load(open(\"r3-probe.json\"))\nassert d[\"A_ternary_tanh_reservoir\"][\"MC\"]>10 and all(d[k][\"MC\"]==0 for k in (\"R1_rings_additive\",\"R2_rings_neighbour_notch\",\"R3_rings_multiplicative\"))\nprint(\"rings-alone-no-memory\")')",
+      "expect": "rings-alone-no-memory",
+      "evidence": [
+        "results/runs/2026-10-16-r3_probe.log",
+        "results/lineage-2026-10-14/r3-probe.json",
+        "liq-armilla/r3_probe.py"
+      ],
+      "runtime_s": 170,
+      "needs": [
+        "python3 with numpy"
+      ],
+      "cpu_flags": [],
+      "what_it_means": "A tempting idea was to let counters on prime rings (one notch per tick, input added in) BE the liquid. The probe measures Jaeger's memory capacity: how well a linear readout can recall past inputs. The ring-only arms recall nothing; the ternary mesh recalls about 14 steps' worth. So the mesh stays as the reservoir and the rings hold its state, they do not replace it.",
+      "how_we_got_it": "liq-armilla/r3_probe.py in a temp dir; log results/runs/2026-10-16-r3_probe.log.",
+      "use_in_your_work": "Do not build a reservoir out of independent counters; keep recurrent mixing.",
+      "honest_limits": "Three specific ring variants and a 100-feature budget; it does not rule out every ring-based dynamical design."
+    },
+    {
+      "id": "L6",
+      "title": "Quality and fault-proofing of the end-to-end ring encoder (result file from 2026-10-14; weights not shipped)",
+      "claim": "held-out retrieval among 4,095 documents: R@1 0.7241 (rings + 12-bit plate) vs 0.7267 (same state, float readout); embeddings identical under 193,221 state faults and 157,248 plate faults (150,779 voted, 2,594 double hits detected and recomputed)",
+      "kind": "file",
+      "verify": "python3 -c '\nimport json\nd=json.load(open(\"results/lineage-2026-10-14/liq-armilla-selftest.json\"))\nassert d[\"liquid_armilla_clean\"][\"R@1\"]==0.7241 and d[\"float_readout_reference\"][\"R@1\"]==0.7267 and d[\"features_identical_with_faults\"] and d[\"max_abs_embedding_diff_faulty_vs_clean\"]==0.0 and d[\"liquid_armilla_with_faults\"]==d[\"liquid_armilla_clean\"]\nprint(\"selftest-file-ok\")'",
+      "expect": "selftest-file-ok",
+      "evidence": [
+        "results/lineage-2026-10-14/liq-armilla-selftest.json",
+        "results/lineage-2026-10-14/liq-armilla-selftest.log",
+        "liq-armilla/liq_armilla.py"
+      ],
+      "runtime_s": 1,
+      "needs": [
+        "python3"
+      ],
+      "cpu_flags": [],
+      "what_it_means": "Re-checks the numbers recorded when the whole encoder (token ids to a 768-number embedding, reservoir on rings, readout plate on 12 rings) was run on a held-out document set, clean and with faults injected. It does not re-run the encoder: that needs the trained readout, which was built from private documents (see L8).",
+      "how_we_got_it": "liq-armilla/liq_armilla.py selftest on the author's machine, 2026-10-14; file copied here unchanged.",
+      "use_in_your_work": "Expectation setting: what quality the ring form kept relative to the float readout, and that faults did not change a single output.",
+      "honest_limits": "Private data, cannot be re-run here; the drive scale was tuned on the same held-out set; one seed."
+    },
+    {
+      "id": "L7",
+      "title": "Negative: the rebuilt retrieval gate was not met by any variant",
+      "claim": "6,194-document pool, 200 held-out queries: hybrid 0.750 for the ring form, 0.755 float-readout on the same state, bar 0.775 not reached (PASS_vs_bar false)",
+      "kind": "file",
+      "verify": "python3 -c '\nimport json\nd=json.load(open(\"results/lineage-2026-10-14/hub3-rebuilt.json\"))\nassert d[\"PASS_vs_bar\"] is False and d[\"liquid_armilla\"][\"hybrid_fts_core\"]==0.75 and d[\"hybrid_minus_fts_only\"]==0.0\nprint(\"gate-not-met\")'",
+      "expect": "gate-not-met",
+      "evidence": [
+        "results/lineage-2026-10-14/hub3-rebuilt.json",
+        "results/lineage-2026-10-14/g8-ternary-gate.json",
+        "results/lineage-2026-10-14/g8-int160-gate.json",
+        "liq-armilla/hub3_rebuilt.py"
+      ],
+      "runtime_s": 1,
+      "needs": [
+        "python3"
+      ],
+      "cpu_flags": [],
+      "what_it_means": "A pre-registered bar for the encoder as part of a hybrid (lexical search plus embedding) retrieval. The ring form adds nothing over lexical search alone on this pool (0.750 vs 0.750), and the float reservoir, 0.770, did not reach 0.775 either. The test passes when the file still records that miss.",
+      "how_we_got_it": "liq-armilla/hub3_rebuilt.py on the author's machine, 2026-10-14; result file copied here.",
+      "use_in_your_work": "Do not expect this encoder alone to beat lexical search on small corpora.",
+      "honest_limits": "Private document pool; 200 queries (4 queries between ring and float, not significant); the gate is the author's own."
+    },
+    {
+      "id": "L8",
+      "title": "End-to-end text encoder (LiquidArmilla.encode_text) with the trained readout",
+      "claim": "text -> WordPiece ids -> ring reservoir -> 12-bit plate on 12 rings -> 768-d embedding (needs the user's tokenizer, token table and a readout fitted on the user's documents)",
+      "kind": "external",
+      "verify": "echo 'needs: tokenizer.json (nomic-embed-text v1.5), embed-core token tables, a fitted readout Wo; see DATA.md'",
+      "expect": "see DATA.md",
+      "evidence": [
+        "liq-armilla/liq_armilla.py",
+        "DATA.md",
+        "results/lineage-2026-10-14/liq-armilla-selftest.json"
+      ],
+      "runtime_s": 300,
+      "needs": [
+        "tokenizer file",
+        "token tables",
+        "trained readout (not shipped)"
+      ],
+      "cpu_flags": [
+        "avx2"
+      ],
+      "what_it_means": "The encoder class and its self-test are in the repository; the data files it needs are not. Build your own readout with liq-armilla/reservoir_int.py on your documents, then run python3 liq-armilla/liq_armilla.py selftest.",
+      "how_we_got_it": "Not run for this release: the readout was built from private documents.",
+      "use_in_your_work": "Semantic embeddings from text on a CPU with exact, repairable arithmetic.",
+      "honest_limits": "Not runnable from this repository alone."
+    },
+    {
+      "id": "FINDINGS1",
+      "title": "2026-10-17 portable Armilla subset",
+      "claim": "Selected relocated own-source APIs and tiny independent oracles pass; full research/science remains separate.",
+      "kind": "run",
+      "verify": "OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python3 findings/smoke.py",
+      "expect": "PASS",
+      "evidence": [
+        "FINDINGS-2026-10-17.md",
+        "findings/LINEAGE.json",
+        "findings/smoke.py"
+      ],
+      "runtime_s": 20,
+      "needs": [
+        "python3"
+      ],
+      "cpu_flags": [],
+      "what_it_means": "Runs source-only controls on synthetic public values with no private corpus, secret key files or research tree imports.",
+      "how_we_got_it": "2026-10-17 isolated temporary staging; selected exact own-source runtimes, explicit relocation/extraction in LINEAGE.json; result bound to authored hashes.",
+      "use_in_your_work": "Inspect and rerun the small typed API boundaries before adapting them to your own public inputs.",
+      "honest_limits": "Portable smoke is not all1364/2018/5482/62396 checks; no security, FHE, production deployment, acoustic accuracy or speed claim."
+    },
+    {
+      "id": "FINDINGS2",
+      "title": "Full frozen research gates are external",
+      "claim": "Historical hybrid5482, wave2018 and HE1364 have scoped independent review; audio62396 is worker engineering evidence only.",
+      "kind": "external",
+      "verify": "echo \"EXTERNAL: original frozen research workspace, source pins and fixture prerequisites required; portable subset is FINDINGS1\"",
+      "expect": "EXTERNAL",
+      "evidence": [
+        "FINDINGS-2026-10-17.md",
+        "findings/LINEAGE.json"
+      ],
+      "runtime_s": 240,
+      "needs": [
+        "external frozen research workspace and explicit fixture prerequisites"
+      ],
+      "cpu_flags": [],
+      "what_it_means": "This release does not execute the full original gates or reproduce scientific measurements.",
+      "how_we_got_it": "Original gate identity and report SHA256 are preserved in findings/LINEAGE.json, with review scope.",
+      "use_in_your_work": "Use the portable subset locally; obtain separately authorized prerequisites for full research reproduction.",
+      "honest_limits": "Audio scientific accuracy/speed/compression targets remain negative; public polynomial toy is not FHE; no deployment/security promotion."
+    }
+  ]
+}

@@ -48,6 +48,7 @@ fi
 [ ${#SEL[@]} -eq 0 ] && mapfile -t SEL < <(all_repos)
 
 declare -A RESULT
+FAILED=0
 for r in "${SEL[@]}"; do
   url=$(field "$r" url); setup=$(field "$r" setup); run=$(field "$r" run); expect=$(field "$r" expect)
   note=$(field "$r" quicktest_note); d="$HOME_DIR/$r"
@@ -60,14 +61,14 @@ for r in "${SEL[@]}"; do
     continue
   fi
   mkdir -p "$HOME_DIR"
-  if [ -d "$d/.git" ]; then git -C "$d" pull -q --ff-only || true; else git clone -q --depth 1 "$url" "$d"; fi
+  if [ -d "$d/.git" ]; then git -C "$d" pull -q --ff-only; else git clone -q --depth 1 "$url" "$d"; fi
   if [ -n "$setup" ]; then
     echo "   setup: $setup"
-    (cd "$d" && bash -c "$setup") || echo "   setup step failed (Debian/Ubuntu: sudo apt install python3-venv); the quick test will show what is missing"
+    if ! (cd "$d" && bash -o pipefail -c "$setup"); then RESULT[$r]="FAIL (setup)"; FAILED=1; continue; fi
   fi
   [ -n "$note" ] && echo "   note: $note"
   echo "   running: $run"
-  if (cd "$d" && bash -c "$run"); then RESULT[$r]=PASS; else RESULT[$r]="FAIL (exit $?)"; fi
+  if (cd "$d" && bash -o pipefail -c "$run"); then RESULT[$r]=PASS; else RESULT[$r]="FAIL (exit $?)"; FAILED=1; fi
   echo "   $r quick test: ${RESULT[$r]}   (expect: $expect)"
 done
 
@@ -76,6 +77,7 @@ if [ $DRY -eq 0 ]; then
   for r in "${SEL[@]}"; do printf '   %-22s %s\n' "$r" "${RESULT[$r]}"; done
   echo "What each test means: each repository's suite.json and STATUS.md, or the MCP server (.mcp/README.md)."
 fi
+[ "$FAILED" -eq 0 ] || exit 1
 if [ $GUI -eq 1 ]; then
   PYZ="$DIR/sovring-suite.pyz"
   if [ ! -f "$PYZ" ]; then   # release asset, not committed: fetch it once

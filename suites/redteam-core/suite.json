@@ -1,0 +1,82 @@
+{
+ "_about": {
+  "repo": "redteam-core",
+  "url": "https://github.com/SovRing-Labs/redteam-core",
+  "one_line": "Own-system surface census and experimental defensive testing CLI.",
+  "quicktest": "python3 tests/local_demo.py",
+  "quicktest_s": 180,
+  "licence": "PolyForm Small Business 1.0.0 OR PolyForm Noncommercial 1.0.0 OR PolyForm Free Trial 1.0.0 (code); CC BY 4.0 (documents)",
+  "status_file": "STATUS.md",
+  "generated": "2026-10-17",
+  "schema": 1
+ },
+ "tests": [
+  {
+   "id": "R1",
+   "title": "Isolated quick test",
+   "claim": "Isolated quick test",
+   "kind": "run",
+   "verify": "python3 tests/local_demo.py",
+   "expect": "PASS (exit 0)",
+   "evidence": [
+    "results/2026-10-17-R1.log"
+   ],
+   "runtime_s": 180,
+   "needs": [
+    "python3",
+    "cargo",
+    "ss command"
+   ],
+   "cpu_flags": [],
+   "what_it_means": "Own-system surface census and experimental defensive testing CLI.",
+   "how_we_got_it": "Isolated harness on Intel i5-8365U laptop, 2026-10-17; output in evidence.",
+   "use_in_your_work": "Recheck on your own temporary files and services before integrating.",
+   "honest_limits": "The doctor repair loop is a TODO. Sandbox probes are not a sandbox boundary and include attempted writes to sensitive paths: do not run sandbox on a real host. Fuzzing requires an external renderer and is not exercised. Census labels listeners; it does not block them. Pattern injection tests do not establish model resistance.",
+   "corrections": []
+  },
+  {
+   "id": "R2",
+   "title": "Repair loop remains a TODO",
+   "claim": "Repair loop remains a TODO",
+   "kind": "file",
+   "verify": "python3 -c \"assert 'TODO: Implement doctor fix loop' in open('src/main.rs').read(); print('PASS')\"",
+   "expect": "PASS (exit 0)",
+   "evidence": [
+    "src/main.rs"
+   ],
+   "runtime_s": 180,
+   "needs": [
+    "python3",
+    "cargo",
+    "ss command"
+   ],
+   "cpu_flags": [],
+   "what_it_means": "Own-system surface census and experimental defensive testing CLI.",
+   "how_we_got_it": "Isolated harness on Intel i5-8365U laptop, 2026-10-17; output in evidence.",
+   "use_in_your_work": "Recheck on your own temporary files and services before integrating.",
+   "honest_limits": "The doctor repair loop is a TODO. Sandbox probes are not a sandbox boundary and include attempted writes to sensitive paths: do not run sandbox on a real host. Fuzzing requires an external renderer and is not exercised. Census labels listeners; it does not block them. Pattern injection tests do not establish model resistance.",
+   "corrections": []
+  },
+  {
+   "id": "R3",
+   "title": "Sandbox probes deliberately untested",
+   "claim": "Sandbox probes deliberately untested",
+   "kind": "external",
+   "verify": "echo external: disposable machine required",
+   "expect": "PASS (exit 0)",
+   "evidence": [
+    "STATUS.md"
+   ],
+   "runtime_s": 180,
+   "needs": [
+    "disposable isolated machine"
+   ],
+   "cpu_flags": [],
+   "what_it_means": "Own-system surface census and experimental defensive testing CLI.",
+   "how_we_got_it": "Isolated harness on Intel i5-8365U laptop, 2026-10-17; output in evidence.",
+   "use_in_your_work": "Recheck on your own temporary files and services before integrating.",
+   "honest_limits": "The doctor repair loop is a TODO. Sandbox probes are not a sandbox boundary and include attempted writes to sensitive paths: do not run sandbox on a real host. Fuzzing requires an external renderer and is not exercised. Census labels listeners; it does not block them. Pattern injection tests do not establish model resistance.",
+   "corrections": []
+  }
+ ]
+}

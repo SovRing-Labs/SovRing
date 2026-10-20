@@ -1,0 +1,126 @@
+{
+  "_about": {
+    "repo": "core-models",
+    "url": "https://github.com/SovRing-Labs/core-models",
+    "one_line": "Fixed ternary reservoirs, ridge readouts, associative rule memory and local splining experiments.",
+    "quicktest": "OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python3 -B checks/probes.py",
+    "quicktest_s": 60,
+    "licence": "PolyForm Small Business 1.0.0 OR PolyForm Noncommercial 1.0.0 + Free Trial (code); CC BY 4.0 (documents)",
+    "status_file": "STATUS.md",
+    "generated": "2026-10-17",
+    "schema": 1,
+    "stage": "about 30 %"
+  },
+  "tests": [
+    {
+      "id": "K1",
+      "title": "Associative memory and correction probe",
+      "claim": "The S3 synthetic probe retains all 50 sequentially added rules and moves the correction target to rank zero.",
+      "kind": "run",
+      "verify": "OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python3 -B checks/probes.py s3",
+      "expect": "PASS",
+      "evidence": [
+        "checks/probes.py",
+        "s3/vsa_probe.py",
+        "results/2026-10-17-quick.log"
+      ],
+      "runtime_s": 40,
+      "needs": [
+        "python3",
+        "numpy"
+      ],
+      "cpu_flags": [],
+      "what_it_means": "The S3 synthetic probe retains all 50 sequentially added rules and moves the correction target to rank zero. Seeded synthetic symbols only; finite capacity and nonzero interference remain.",
+      "how_we_got_it": "Run the shipped check on an Intel i5-8365U laptop, 2026-10-17; output in results/2026-10-17-quick.log.",
+      "use_in_your_work": "Use the runnable checks to assess changes while keeping model/data prerequisites explicit.",
+      "honest_limits": "Seeded synthetic symbols only; finite capacity and nonzero interference remain."
+    },
+    {
+      "id": "K2",
+      "title": "Local splining probe",
+      "claim": "S4 rechecks unchanged base accuracy, grows 24 nodes over 256 (9.38%), and scores 0.96 on its negative-only held-out novel slice.",
+      "kind": "run",
+      "verify": "OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python3 -B checks/probes.py s4",
+      "expect": "PASS",
+      "evidence": [
+        "checks/probes.py",
+        "s4/spline_probe.py",
+        "results/2026-10-17-quick.log"
+      ],
+      "runtime_s": 40,
+      "needs": [
+        "python3",
+        "numpy"
+      ],
+      "cpu_flags": [],
+      "what_it_means": "S4 rechecks unchanged base accuracy, grows 24 nodes over 256 (9.38%), and scores 0.96 on its negative-only held-out novel slice. The novel-task test indices 200:300 contain only negatives; the before score uses all-zero labels instead of Y_novel. This does not establish novel-fault detection or a valid before/after comparison.",
+      "how_we_got_it": "Run the shipped check on an Intel i5-8365U laptop, 2026-10-17; output in results/2026-10-17-quick.log.",
+      "use_in_your_work": "Use the runnable checks to assess changes while keeping model/data prerequisites explicit.",
+      "honest_limits": "The novel-task test indices 200:300 contain only negatives; the before score uses all-zero labels instead of Y_novel. This does not establish novel-fault detection or a valid before/after comparison."
+    },
+    {
+      "id": "K3",
+      "title": "Held-out retrieval summary",
+      "claim": "The historical five-seed, two-direction held-out hybrid summary is mean 0.785, SD 0.0169 across 10 folds.",
+      "kind": "file",
+      "verify": "python3 -B -c 'import json; d=json.load(open('\"'\"'results/heldout-1013/heldout-s1.json'\"'\"')); x=d['\"'\"'summary'\"'\"']['\"'\"'core_arm'\"'\"']['\"'\"'heldout_recall'\"'\"']; assert x==[0.785,0.0169,10] and len(d['\"'\"'per_seed'\"'\"'])==5; print('\"'\"'PASS'\"'\"')'",
+      "expect": "PASS",
+      "evidence": [
+        "results/heldout-1013/heldout-s1.json"
+      ],
+      "runtime_s": 1,
+      "needs": [
+        "python3"
+      ],
+      "cpu_flags": [],
+      "what_it_means": "The historical five-seed, two-direction held-out hybrid summary is mean 0.785, SD 0.0169 across 10 folds. Two directions per seed are not ten independent models; no rank cache ships.",
+      "how_we_got_it": "Read the aggregate historical result named in evidence; no original training inputs or query text are included.",
+      "use_in_your_work": "Use the runnable checks to assess changes while keeping model/data prerequisites explicit.",
+      "honest_limits": "Two directions per seed are not ten independent models; no rank cache ships."
+    },
+    {
+      "id": "K4",
+      "title": "Splining negative is explicit",
+      "claim": "Historical S4 records 1.0 before and 0.96 after pruning, but the before score uses all-zero labels and the held-out slice contains only negatives.",
+      "kind": "file",
+      "verify": "python3 -B -c 'import json\nfrom pathlib import Path\nd=json.load(open(\"s4/results/s4_spline_summary.json\"))\ns=Path(\"s4/spline_probe.py\").read_text()\nassert d[\"novel_fault_acc_before\"]==1.0 and d[\"novel_fault_acc_pruned_frozen\"]==0.96\nassert \"np.zeros(300, dtype=int))\" in s\nassert \"for i in range(150):\" in s and \"np.arange(200, 300)\" in s\nprint(\"PASS: historical scores retained; all-zero baseline labels and negative-only held-out slice disclosed\")'",
+      "expect": "PASS",
+      "evidence": [
+        "s4/results/s4_spline_summary.json",
+        "s4/spline_probe.py"
+      ],
+      "runtime_s": 1,
+      "needs": [
+        "python3"
+      ],
+      "cpu_flags": [],
+      "what_it_means": "Historical S4 records 1.0 before and 0.96 after pruning, but the before score uses all-zero labels and the held-out slice contains only negatives.",
+      "how_we_got_it": "Read the aggregate historical result named in evidence; no original training inputs or query text are included.",
+      "use_in_your_work": "Use the runnable checks to assess changes while keeping model/data prerequisites explicit.",
+      "honest_limits": "These scores do not establish a solved novel task, an improvement, or balanced fault detection."
+    },
+    {
+      "id": "K5",
+      "title": "Training, export and adaptation",
+      "claim": "Training and model export require user-owned teacher targets, token sequences, weights and services.",
+      "kind": "external",
+      "verify": "python3 export_embed_core.py",
+      "expect": "PASS",
+      "evidence": [
+        "DATA.md",
+        "export_embed_core.py"
+      ],
+      "runtime_s": 1,
+      "needs": [
+        "python3",
+        "user-owned model weights and corpus",
+        "external tokenizer and services"
+      ],
+      "cpu_flags": [],
+      "what_it_means": "Training and model export require user-owned teacher targets, token sequences, weights and services. Not runnable from a weights-free export.",
+      "how_we_got_it": "Read the aggregate historical result named in evidence; no original training inputs or query text are included.",
+      "use_in_your_work": "Use the runnable checks to assess changes while keeping model/data prerequisites explicit.",
+      "honest_limits": "Not runnable from a weights-free export."
+    }
+  ]
+}

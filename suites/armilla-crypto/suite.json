@@ -1,0 +1,176 @@
+{
+  "_about": {
+    "repo": "armilla-crypto",
+    "url": "https://github.com/SovRing-Labs/armilla-crypto",
+    "one_line": "RNS Montgomery cryptography workloads",
+    "quicktest": "PYTHONDONTWRITEBYTECODE=1 python3 tests/check.py native",
+    "quicktest_s": 110,
+    "licence": "PolyForm Small Business 1.0.0 OR PolyForm Noncommercial 1.0.0 + Free Trial; CC BY 4.0 documents",
+    "status_file": "STATUS.md",
+    "generated": "2026-10-17",
+    "schema": 1
+  },
+  "tests": [
+    {
+      "id": "X1",
+      "title": "Native Montgomery exactness",
+      "claim": "24 batched modular exponentiations equal Python pow.",
+      "kind": "run",
+      "verify": "PYTHONDONTWRITEBYTECODE=1 python3 tests/check.py native",
+      "expect": "PASS",
+      "evidence": [
+        "tests/check.py",
+        "exec/native.py",
+        "results/2026-10-17-quicktests.log"
+      ],
+      "runtime_s": 110,
+      "needs": [
+        "python3",
+        "numpy"
+      ],
+      "cpu_flags": [],
+      "what_it_means": "24 batched modular exponentiations equal Python pow. Passing validates only the stated check.",
+      "how_we_got_it": "Intel i5-8365U laptop; 2026-10-17; command in verify, output in the dated results log. Historical measurements are explicitly marked in STATUS.md.",
+      "use_in_your_work": "Reproduce the arithmetic and compare with your reference before using the workload.",
+      "honest_limits": "Small deterministic workload; no general security or codec-conformance claim."
+    },
+    {
+      "id": "X2",
+      "title": "AVX2 Montgomery exactness",
+      "claim": "8 cases including exponent zero equal Python pow.",
+      "kind": "run",
+      "verify": "PYTHONDONTWRITEBYTECODE=1 python3 tests/check.py avx2",
+      "expect": "PASS",
+      "evidence": [
+        "tests/check.py",
+        "exec/rns_avx2.c",
+        "results/2026-10-17-quicktests.log"
+      ],
+      "runtime_s": 110,
+      "needs": [
+        "python3",
+        "numpy",
+        "gcc",
+        "libgmp.so.10"
+      ],
+      "cpu_flags": [
+        "avx2"
+      ],
+      "what_it_means": "8 cases including exponent zero equal Python pow. Passing validates only the stated check.",
+      "how_we_got_it": "Intel i5-8365U laptop; 2026-10-17; command in verify, output in the dated results log. Historical measurements are explicitly marked in STATUS.md.",
+      "use_in_your_work": "Reproduce the arithmetic and compare with your reference before using the workload.",
+      "honest_limits": "Small deterministic workload; no general security or codec-conformance claim."
+    },
+    {
+      "id": "X3",
+      "title": "Toy RSA fault and threshold workload",
+      "claim": "Six guarded signatures correct; six unguarded signatures leak a factor; any pair of shares recovers.",
+      "kind": "run",
+      "verify": "T=$(mktemp -d) && cp -r exec \"$T/exec\" && mkdir \"$T/results\" && (cd \"$T\" && PYTHONDONTWRITEBYTECODE=1 python3 exec/workloads_demo.py) && python3 -c 'import json,sys; d=json.load(open(sys.argv[1])); r=d[\"crypto_rsa_crt_fault\"]; assert r[\"clean_signature_ok\"] and r[\"bellcore\"][\"factor_leaked\"]=={\"unguarded\":6,\"guarded\":0} and r[\"bellcore\"][\"signature_correct\"]=={\"unguarded\":0,\"guarded\":6} and d[\"reservoir_tick_on_rings\"][\"mismatches_vs_integer_twin\"]==0 and all(d[\"drm_key_split_asmuth_bloom_2of3\"][\"any_two_shares_recover\"].values()); print(\"PASS\")' \"$T/results/c6-workloads.json\"",
+      "expect": "PASS",
+      "evidence": [
+        "exec/workloads_demo.py",
+        "results/c6-workloads.json",
+        "results/2026-10-17-quicktests.log"
+      ],
+      "runtime_s": 110,
+      "needs": [
+        "python3",
+        "numpy"
+      ],
+      "cpu_flags": [],
+      "what_it_means": "Six guarded signatures correct; six unguarded signatures leak a factor; any pair of shares recovers. Passing validates only the stated check.",
+      "how_we_got_it": "Intel i5-8365U laptop; 2026-10-17; command in verify, output in the dated results log. Historical measurements are explicitly marked in STATUS.md.",
+      "use_in_your_work": "Reproduce the arithmetic and compare with your reference before using the workload.",
+      "honest_limits": "Small deterministic workload; no general security or codec-conformance claim."
+    },
+    {
+      "id": "X4",
+      "title": "Historical speed negative",
+      "claim": "Historical AVX2 1024-bit modexp 5.12 ms vs GMP 0.40 ms.",
+      "kind": "file",
+      "verify": "python3 tests/check.py negative",
+      "expect": "PASS",
+      "evidence": [
+        "results/c8-speed.json",
+        "results/2026-10-17-quicktests.log"
+      ],
+      "runtime_s": 110,
+      "needs": [
+        "python3",
+        "numpy"
+      ],
+      "cpu_flags": [],
+      "what_it_means": "Historical AVX2 1024-bit modexp 5.12 ms vs GMP 0.40 ms. Passing validates only the stated check.",
+      "how_we_got_it": "Intel i5-8365U laptop; 2026-10-17; command in verify, output in the dated results log. Historical measurements are explicitly marked in STATUS.md.",
+      "use_in_your_work": "Reproduce the arithmetic and compare with your reference before using the workload.",
+      "honest_limits": "Small deterministic workload; no general security or codec-conformance claim."
+    },
+    {
+      "id": "X5",
+      "title": "Paillier and math ladder prerequisites",
+      "claim": "Paillier is already in the pinned public engine; field Ed25519 remains blocked.",
+      "kind": "external",
+      "verify": "echo \"External: pinned engine experiments/paillier; math-core spec data needed for exec/verify.py\"",
+      "expect": "PASS",
+      "evidence": [
+        "PROVENANCE.md",
+        "STATUS.md"
+      ],
+      "runtime_s": 110,
+      "needs": [
+        "armilla-astrolabe at pinned revision",
+        "math-core emitted index/specs"
+      ],
+      "cpu_flags": [],
+      "what_it_means": "Paillier is already in the pinned public engine; field Ed25519 remains blocked. Passing validates only the stated check.",
+      "how_we_got_it": "Intel i5-8365U laptop; 2026-10-17; command in verify, output in the dated results log. Historical measurements are explicitly marked in STATUS.md.",
+      "use_in_your_work": "Reproduce the arithmetic and compare with your reference before using the workload.",
+      "honest_limits": "Small deterministic workload; no general security or codec-conformance claim."
+    },
+    {
+      "id": "FINDINGS1",
+      "title": "2026-10-17 portable Armilla subset",
+      "claim": "Selected relocated own-source APIs and tiny independent oracles pass; full research/science remains separate.",
+      "kind": "run",
+      "verify": "OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python3 findings/smoke.py",
+      "expect": "PASS",
+      "evidence": [
+        "FINDINGS-2026-10-17.md",
+        "findings/LINEAGE.json",
+        "findings/smoke.py"
+      ],
+      "runtime_s": 20,
+      "needs": [
+        "python3",
+        "numpy"
+      ],
+      "cpu_flags": [],
+      "what_it_means": "Runs source-only controls on synthetic public values with no private corpus, secret key files or research tree imports.",
+      "how_we_got_it": "2026-10-17 isolated temporary staging; selected exact own-source runtimes, explicit relocation/extraction in LINEAGE.json; result bound to authored hashes.",
+      "use_in_your_work": "Inspect and rerun the small typed API boundaries before adapting them to your own public inputs.",
+      "honest_limits": "Portable smoke is not all1364/2018/5482/62396 checks; no security, FHE, production deployment, acoustic accuracy or speed claim."
+    },
+    {
+      "id": "FINDINGS2",
+      "title": "Full frozen research gates are external",
+      "claim": "Historical hybrid5482, wave2018 and HE1364 have scoped independent review; audio62396 is worker engineering evidence only.",
+      "kind": "external",
+      "verify": "echo \"EXTERNAL: original frozen research workspace, source pins and fixture prerequisites required; portable subset is FINDINGS1\"",
+      "expect": "EXTERNAL",
+      "evidence": [
+        "FINDINGS-2026-10-17.md",
+        "findings/LINEAGE.json"
+      ],
+      "runtime_s": 240,
+      "needs": [
+        "external frozen research workspace and explicit fixture prerequisites"
+      ],
+      "cpu_flags": [],
+      "what_it_means": "This release does not execute the full original gates or reproduce scientific measurements.",
+      "how_we_got_it": "Original gate identity and report SHA256 are preserved in findings/LINEAGE.json, with review scope.",
+      "use_in_your_work": "Use the portable subset locally; obtain separately authorized prerequisites for full research reproduction.",
+      "honest_limits": "Audio scientific accuracy/speed/compression targets remain negative; public polynomial toy is not FHE; no deployment/security promotion."
+    }
+  ]
+}

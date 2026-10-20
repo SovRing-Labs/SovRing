@@ -1,0 +1,81 @@
+{
+ "_about": {
+  "repo": "guard-core",
+  "url": "https://github.com/SovRing-Labs/guard-core",
+  "one_line": "Receipt-reconciled file-integrity baseline for your own files.",
+  "quicktest": "python3 tests/guard_demo.py",
+  "quicktest_s": 10,
+  "licence": "PolyForm Small Business 1.0.0 OR PolyForm Noncommercial 1.0.0 OR PolyForm Free Trial 1.0.0 (code); CC BY 4.0 (documents)",
+  "status_file": "STATUS.md",
+  "generated": "2026-10-17",
+  "schema": 1
+ },
+ "tests": [
+  {
+   "id": "G1",
+   "title": "Isolated quick test",
+   "claim": "Isolated quick test",
+   "kind": "run",
+   "verify": "python3 tests/guard_demo.py",
+   "expect": "PASS (exit 0)",
+   "evidence": [
+    "results/2026-10-17-G1.log"
+   ],
+   "runtime_s": 30,
+   "needs": [
+    "python3",
+    "git"
+   ],
+   "cpu_flags": [],
+   "what_it_means": "Receipt-reconciled file-integrity baseline for your own files.",
+   "how_we_got_it": "Isolated harness on Intel i5-8365U laptop, 2026-10-17; output in evidence.",
+   "use_in_your_work": "Recheck on your own temporary files and services before integrating.",
+   "honest_limits": "G0 file-integrity only. No process monitor, malware detector, rules engine or automatic enforcement. The historical Python lookup missed its one-microsecond target; this export makes no latency claim.",
+   "corrections": []
+  },
+  {
+   "id": "G2",
+   "title": "CLI help without baseline access",
+   "claim": "CLI help without baseline access",
+   "kind": "run",
+   "verify": "python3 bin/guard-core --help >/dev/null",
+   "expect": "PASS (exit 0)",
+   "evidence": [
+    "results/2026-10-17-G2.log"
+   ],
+   "runtime_s": 30,
+   "needs": [
+    "python3",
+    "git"
+   ],
+   "cpu_flags": [],
+   "what_it_means": "Receipt-reconciled file-integrity baseline for your own files.",
+   "how_we_got_it": "Isolated harness on Intel i5-8365U laptop, 2026-10-17; output in evidence.",
+   "use_in_your_work": "Recheck on your own temporary files and services before integrating.",
+   "honest_limits": "G0 file-integrity only. No process monitor, malware detector, rules engine or automatic enforcement. The historical Python lookup missed its one-microsecond target; this export makes no latency claim.",
+   "corrections": []
+  },
+  {
+   "id": "G3",
+   "title": "G0 excludes process monitoring and automatic enforcement",
+   "claim": "G0 excludes process monitoring and automatic enforcement",
+   "kind": "file",
+   "verify": "python3 -c \"assert 'No process monitor' in open('STATUS.md').read(); print('PASS')\"",
+   "expect": "PASS (exit 0)",
+   "evidence": [
+    "STATUS.md"
+   ],
+   "runtime_s": 30,
+   "needs": [
+    "python3",
+    "git"
+   ],
+   "cpu_flags": [],
+   "what_it_means": "Receipt-reconciled file-integrity baseline for your own files.",
+   "how_we_got_it": "Isolated harness on Intel i5-8365U laptop, 2026-10-17; output in evidence.",
+   "use_in_your_work": "Recheck on your own temporary files and services before integrating.",
+   "honest_limits": "G0 file-integrity only. No process monitor, malware detector, rules engine or automatic enforcement. The historical Python lookup missed its one-microsecond target; this export makes no latency claim.",
+   "corrections": []
+  }
+ ]
+}

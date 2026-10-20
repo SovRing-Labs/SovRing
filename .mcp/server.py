@@ -20,6 +20,8 @@ import os
 import platform
 import re
 import shutil
+import shlex
+import signal
 import subprocess
 import sys
 
@@ -34,7 +36,11 @@ def registry():
     for p in (os.path.join(UMBRELLA, "repos.json"), os.path.join(HERE, "repos.json")):
         if os.path.exists(p):
             with open(p) as f:
-                return json.load(f)
+                reg = json.load(f)
+                names = [r["repo"] for r in reg["repos"]]
+                if len(names) != len(set(names)):
+                    raise ValueError("duplicate repository in registry")
+                return reg
     raise RuntimeError("repos.json not found beside the server (looked in %s)" % UMBRELLA)
 
 
@@ -59,13 +65,19 @@ def suite(name):
 
 
 def sh(cmd, cwd, timeout):
+    p = subprocess.Popen(["bash", "-o", "pipefail", "-c", cmd], cwd=cwd,
+                         stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                         text=True, start_new_session=True)
     try:
-        r = subprocess.run(["bash", "-c", cmd], cwd=cwd, capture_output=True, text=True, timeout=timeout)
-        return r.returncode, (r.stdout + r.stderr)
-    except subprocess.TimeoutExpired as e:
-        out = (e.stdout or b"")
-        out = out.decode(errors="replace") if isinstance(out, bytes) else out
-        return 124, out + "\n[timed out after %ss]" % timeout
+        stdout, stderr = p.communicate(timeout=timeout)
+        return p.returncode, stdout + stderr
+    except subprocess.TimeoutExpired:
+        try:
+            os.killpg(p.pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
+        stdout, stderr = p.communicate()
+        return 124, stdout + stderr + "\n[timed out after %ss]" % timeout
 
 
 def tail(text, n=25):
@@ -130,6 +142,9 @@ def need_ok(need, flags):
         ok = _pymod("venv") and _pymod("ensurepip")
         return ok, "python module %s (setup installs it into .venv; venv support %s)" % (
             need, "present" if ok else "missing"), "Debian/Ubuntu: sudo apt install python3-venv"
+    if need in ("rustc", "cc", "ss"):
+        ok = shutil.which(need) is not None
+        return ok, need + (" found" if ok else " not found"), "install the required tool; see README"
     if need in FIX:
         ok = shutil.which(need) is not None
         return ok, "%s %s" % (need, "found" if ok else "not found"), FIX[need]
@@ -209,7 +224,7 @@ def t_fetch_repo(repo):
         ec, out = sh("git pull --ff-only -q", d, 120)
         return "already cloned at %s (git pull exit %d)" % (d, ec)
     os.makedirs(HOME, exist_ok=True)
-    ec, out = sh("git clone -q --depth 1 %s %s" % (r["url"], d), HOME, 600)
+    ec, out = sh("git clone -q --depth 1 %s %s" % (shlex.quote(r["url"]), shlex.quote(d)), HOME, 300)
     return ("cloned %s → %s" % (r["url"], d)) if ec == 0 else ("clone FAILED (exit %d)\n%s" % (ec, tail(out)))
 
 
@@ -220,18 +235,18 @@ def _need_clone(repo):
     return d
 
 
-def t_quick_test(repo, timeout_s=900):
+def t_quick_test(repo, timeout_s=300):
     _, r = repo_entry(repo)
     d = _need_clone(repo)
     pre = ""
     if r.get("setup") and not os.path.exists(os.path.join(d, ".sovring-setup-ok")):
-        ec, out = sh(r["setup"], d, 900)
+        ec, out = sh(r["setup"], d, 300)
         if ec != 0:
             return ("%s setup FAILED (exit %d): %s\n%s\nDebian/Ubuntu without venv support: sudo apt install python3-venv"
                     % (repo, ec, r["setup"], tail(out)))
         open(os.path.join(d, ".sovring-setup-ok"), "w").close()
         pre = "setup done: %s\n" % r["setup"]
-    ec, out = sh(r["run"], d, int(timeout_s))
+    ec, out = sh(r["run"], d, min(300, max(1, int(timeout_s))))
     return "%s%s quick test: %s (exit %d)\ncommand: %s\nexpect: %s\n--- last lines ---\n%s" % (
         pre, repo, "PASS" if ec == 0 else "FAIL", ec, r["run"], r["expect"], tail(out))
 
@@ -251,6 +266,7 @@ def t_list_tests(repo):
 
 
 def _test(repo, test_id):
+    repo_entry(repo)
     s, path = suite(repo)
     if not s:
         raise ValueError("%s has no suite.json yet; use quick_test(%r)" % (repo, repo))
@@ -276,7 +292,7 @@ def t_run_test(repo, test_id):
         return "[%s] %s" % (t["id"], skip)
     d = _need_clone(repo)
     venv = ". .venv/bin/activate && " if os.path.exists(os.path.join(d, ".venv", "bin", "activate")) else ""
-    ec, out = sh(venv + t["verify"], d, max(60, int(t.get("runtime_s", 60)) * 10))
+    ec, out = sh(venv + t["verify"], d, min(300, max(60, int(t.get("runtime_s", 60)) * 10)))
     return "[%s] %s (exit %d)\nclaim: %s\nexpect: %s\n--- last lines ---\n%s" % (
         t["id"], "PASS" if ec == 0 else "FAIL", ec, t["claim"], t["expect"], tail(out, 15))
 

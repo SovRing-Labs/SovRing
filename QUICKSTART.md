@@ -56,3 +56,7 @@ PYTHONPATH=engine python3 -m pytest -q engine/tests       # expect: 9 passed
 | `node: bad option: --experimental-strip-types` (cost-savers) | install Node 22.6+ (nodejs.org) |
 | a test is marked SKIP for a CPU flag | your CPU lacks that instruction set (e.g. AVX-512); the result file is still in the repository |
 | anything else | `./install.sh --dry-run <repo>` shows each command; run them one by one, or ask the MCP server `check_readiness` |
+
+## The complete catalog
+
+`./install.sh --list` and the MCP `explain` tool discover the same 26 repositories: 12 original public repositories and 14 local E exports. The E public URLs await publication. `./install.sh --dry-run REPO` prints setup before running it. Local suite PASS means the stated check passed; EXTERNAL rows and scientific negatives remain limitations. See STATUS.md and each suite.json.

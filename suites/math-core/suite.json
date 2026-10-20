@@ -1,0 +1,189 @@
+{
+  "_about": {
+    "repo": "math-core",
+    "url": "https://github.com/SovRing-Labs/math-core",
+    "one_line": "The math core: a factory that turns a published definition into a verified concept (reference definition, recorded rows, property laws with teeth, generators, composer).",
+    "quicktest": "python3 -I tools/defcheck.py . | tail -1",
+    "quicktest_s": 25,
+    "licence": "PolyForm Small Business 1.0.0 OR PolyForm Noncommercial 1.0.0 (+ Free Trial); documents CC BY 4.0",
+    "status_file": "STATUS.md",
+    "generated": "2026-10-16",
+    "schema": 1,
+    "stage": "pre-alpha, about 70 %",
+    "source": "m1/ref.py, m1/ref_ext.py, m1/specs.jsonl, laws/mathkb.json, gen/mathgen.py, compose.py; every row re-run on 2026-10-16 on an Intel i5-8365U laptop, logs in results/"
+  },
+  "tests": [
+    {
+      "id": "M1",
+      "title": "The published definitions reproduce 3,245 recorded spec rows (39 concepts)",
+      "claim": "Every concept's reference definition (m1/ref.py, m1/ref_ext.py) gives the recorded output on all 3,245 spec rows of the 39 concepts that have a spec: 0 mismatches",
+      "kind": "run",
+      "verify": "python3 -I tools/defcheck.py . | tail -1 | grep -q '\"pass\": true' && echo ok",
+      "expect": "ok",
+      "evidence": [
+        "results/2026-10-16-defcheck.log",
+        "m1/specs.jsonl",
+        "m1/ref.py",
+        "m1/ref_ext.py"
+      ],
+      "runtime_s": 25,
+      "needs": [
+        "python3"
+      ],
+      "cpu_flags": [],
+      "what_it_means": "Each concept in the library starts as a plain, published definition (for example gcd by Euclid, Montgomery product, the Number Theoretic Transform). The spec file records rows of inputs and outputs for each concept. This test sends every recorded input to the reference definition and compares the answer with the recorded output (floats within 1e-5 + 1e-4 relative). Passing means the definitions and the recorded rows agree exactly; it is the ground that the factory's reader checks the authored equations against.",
+      "how_we_got_it": "tools/defcheck.py reads emit/index.json (concept to equation) and m1/specs.jsonl (examples + holdout + validate rows per equation), starts m1/ref.py once per concept with one line per row, and compares. Run once on an Intel i5-8365U laptop on 2026-10-16: 39 concepts, 3,245 rows, 0 mismatches (results/2026-10-16-defcheck.log).",
+      "use_in_your_work": "Use the reference definitions as an oracle: any implementation of the same concept (your own gcd, NTT, Montgomery) can be checked against m1/ref.py row by row, and the rows in m1/specs.jsonl are ready-made test vectors.",
+      "honest_limits": "It shows the definitions match the recorded rows; it does not show the rows cover every input, and the rows were produced by the same definitions (the factory's other stations check the authored equations against them)."
+    },
+    {
+      "id": "M2",
+      "title": "Negative control: tampered rows are all caught",
+      "claim": "When every recorded output is changed on purpose, the same check reports a mismatch on all 3,245 rows (so M1's agreement is not vacuous)",
+      "kind": "run",
+      "verify": "python3 -I tools/defcheck.py . --teeth | tail -1 | grep -q '\"pass\": true' && echo ok",
+      "expect": "ok",
+      "evidence": [
+        "results/2026-10-16-defcheck-teeth.log"
+      ],
+      "runtime_s": 25,
+      "needs": [
+        "python3"
+      ],
+      "cpu_flags": [],
+      "what_it_means": "A check that cannot fail proves nothing. This run changes each recorded output (integers +1, floats +1.0, lists: first entry +1) and expects the comparison to reject every row. Passing means M1's comparison does have teeth.",
+      "how_we_got_it": "tools/defcheck.py with --teeth, same inputs as M1, 2026-10-16, laptop; 3,245 of 3,245 rows rejected (results/2026-10-16-defcheck-teeth.log).",
+      "use_in_your_work": "Copy the pattern for your own test vectors: tamper, expect failure, then trust the pass.",
+      "honest_limits": "Shows the comparison can fail on altered data; it does not test the definitions themselves."
+    },
+    {
+      "id": "M3",
+      "title": "39 concept laws hold on fresh random draws",
+      "claim": "Each of the 39 laws in laws/mathkb.json (a property of its concept, never the definition restated) holds on 300 fresh seeded draws: 39/39 laws, 0 failures",
+      "kind": "run",
+      "verify": "python3 -I tools/lawcheck.py . | tail -1 | grep -q '\"pass\": true' && echo ok",
+      "expect": "ok",
+      "evidence": [
+        "results/2026-10-16-lawcheck.log",
+        "laws/mathkb.json"
+      ],
+      "runtime_s": 20,
+      "needs": [
+        "python3"
+      ],
+      "cpu_flags": [],
+      "what_it_means": "A law is a property the concept must have, for example: a modular inverse of the inverse is the number itself; the product of the CRT residues covers every pair exactly once; the NTT followed by its inverse returns the input. Each law has a generator of random inputs. Passing means all 39 properties hold on 300 new draws each.",
+      "how_we_got_it": "tools/lawcheck.py loads laws/mathkb.json, runs each law's generator with a seeded random source, evaluates its Python form on each draw. 2026-10-16 laptop: 39 laws, 300 draws each, 0 failed (results/2026-10-16-lawcheck.log). In the development tree the same laws are cemented in a ledger at 2 seeds x 1,000 draws.",
+      "use_in_your_work": "Property-test your own implementation of the same concepts with these generators; the laws are standalone Python.",
+      "honest_limits": "Random draws, not a proof; 300 draws per law here against 1,000 per seed in the factory ledger (that ledger is not shipped)."
+    },
+    {
+      "id": "M4",
+      "title": "Law teeth: a broken subject fails every recorded law",
+      "claim": "For the 15 laws with a recorded teeth run, the good subject passed 1000/1000 and the deliberately broken subject failed at least once on each (from 45 to 1000 failures per 1000)",
+      "kind": "file",
+      "verify": "python3 -I tools/teethcheck.py . | tail -1 | grep -q '\"pass\": true' && echo ok",
+      "expect": "ok",
+      "evidence": [
+        "results/2026-10-16-laws-teeth-ingest1.json",
+        "results/2026-10-16-laws-teeth-r3.json",
+        "results/2026-10-16-teethcheck.log"
+      ],
+      "runtime_s": 2,
+      "needs": [
+        "python3"
+      ],
+      "cpu_flags": [],
+      "what_it_means": "A law that nothing can break is decoration. For 15 of the 39 laws the factory recorded a run where the concept's code was broken on purpose; the law had to fail. This test re-reads those two records and checks every entry (good passes all, broken fails at least once).",
+      "how_we_got_it": "results/*laws-teeth*.json were written by the factory's law station (r3/laws.py teeth, ing/laws.py) during the 2026-10-14 runs; tools/teethcheck.py re-reads them today (results/2026-10-16-teethcheck.log).",
+      "use_in_your_work": "Shows how to prove a property test is sharp: keep the broken variant next to the good one.",
+      "honest_limits": "Only 15 of 39 laws have a record in this repository; the first 10 laws' teeth are described in tests/INDEX.md (8 of 10 failed as they should, 2 were too weak and were strengthened) but their raw record is not shipped."
+    },
+    {
+      "id": "M5",
+      "title": "Wrong answers made by the generators are all refused",
+      "claim": "gen/mathgen.py mutate --n 200: for 10 concepts all 2,000 right answers are accepted and all 7,152 wrong answers made from them are refused (failures 0)",
+      "kind": "run",
+      "verify": "python3 -I gen/mathgen.py mutate --n 200 | python3 -I tools/mutcheck.py | tail -1 | grep -q '\"pass\": true' && echo ok",
+      "expect": "ok",
+      "evidence": [
+        "results/2026-10-16-mathgen-mutate.log",
+        "gen/mathgen.py"
+      ],
+      "runtime_s": 5,
+      "needs": [
+        "python3"
+      ],
+      "cpu_flags": [],
+      "what_it_means": "The dock generators make practice problems with an answer found one way and checked by a different way. The mutation run corrupts right answers (off by one, wrong shift, wrong start) and the independent verifier has to reject each corruption. Passing means the verifiers cannot be fooled by these 7,152 wrong answers.",
+      "how_we_got_it": "gen/mathgen.py mutate --n 200 piped to tools/mutcheck.py, 2026-10-16, laptop, seeded: 10 concepts, 2,000 right accepted, 7,152 wrong refused (results/2026-10-16-mathgen-mutate.log). The 2026-10-08 record in tests/INDEX.md says 6,352; the wrong-answer makers differ in count today and this has not been traced.",
+      "use_in_your_work": "Training data and checkers for small models: rows exist only when two different methods agree.",
+      "honest_limits": "Generators exist for 10 of the 39 spec'd concepts only (the first batch)."
+    },
+    {
+      "id": "M6",
+      "title": "The composer rebuilds recorded compositions from library words",
+      "claim": "compose.py turns (@hamming a0 a1) into hamming's equation and (@rns_extend (@rns_mont_mul ...) a7 a6) into the recorded rns_mont_mul_a equation, character for character",
+      "kind": "run",
+      "verify": "python3 -I tools/composecheck.py . | tail -1 | grep -q '\"pass\": true' && echo ok",
+      "expect": "ok",
+      "evidence": [
+        "results/2026-10-16-composecheck.log",
+        "compose.py",
+        "emit/index.json"
+      ],
+      "runtime_s": 2,
+      "needs": [
+        "python3"
+      ],
+      "cpu_flags": [],
+      "what_it_means": "A large concept can be written as a composition of concepts already verified. The composer substitutes each word's equation, shifting loop depths so loops nest. Passing means two recorded compositions (one trivial, one of 2,062 characters) come out exactly as recorded.",
+      "how_we_got_it": "tools/composecheck.py calls compose.py and compares with emit/index.json, 2026-10-16 laptop (results/2026-10-16-composecheck.log).",
+      "use_in_your_work": "Build bigger verified equations from small ones without retyping them.",
+      "honest_limits": "Composition is not trusted by itself: the factory re-checks the result through its reader, wall, emitter and a law (not run here)."
+    },
+    {
+      "id": "M7",
+      "title": "Factory receipts: readers agree, emitted programs verified, and the one wrong form not refused",
+      "claim": "45 factory-built concepts: reader agreed with the reference on all defined probe rows (100-400 probes each), emitted program verified on 60,732 rows in total; deliberately wrong forms were refused for 44 concepts and for sign_detect only 1 of 2",
+      "kind": "file",
+      "verify": "python3 -I tools/receiptcheck.py . | tail -1 | grep -q '\"pass\": true' && echo ok",
+      "expect": "ok",
+      "evidence": [
+        "results/2026-10-16-factory-receipts.json",
+        "results/2026-10-16-receiptcheck.log"
+      ],
+      "runtime_s": 2,
+      "needs": [
+        "python3"
+      ],
+      "cpu_flags": [],
+      "what_it_means": "The factory's reader compares an authored equation with the black-box reference on hundreds of probe rows; 'teeth' are wrong equations it must refuse. This test reads the shipped receipts and reports what they say, including that one wrong form of sign_detect agreed with all 400 probes and was not refused.",
+      "how_we_got_it": "tools/receiptcheck.py over results/2026-10-16-factory-receipts.json, collected from the 45 per-concept result.json files of the 2026-10-14..16 factory runs (results/2026-10-16-receiptcheck.log).",
+      "use_in_your_work": "See the negative: a probe set can fail to tell two forms apart; add probes that reach the differing branch.",
+      "honest_limits": "These are recorded results; re-running the factory needs its reader binary (M8)."
+    },
+    {
+      "id": "M8",
+      "title": "Re-running the factory (reader, wall, emitter) needs the doctor binary",
+      "claim": "The full factory build of a concept (reader -> teeth -> wall -> emit) is not runnable from this repository alone",
+      "kind": "external",
+      "verify": "test -f results/2026-10-16-factory-receipts.json && echo recorded",
+      "expect": "recorded",
+      "evidence": [
+        "results/2026-10-16-factory-receipts.json",
+        "ing/factory.py",
+        "r3/factory.py"
+      ],
+      "runtime_s": 1,
+      "needs": [
+        "python3"
+      ],
+      "cpu_flags": [],
+      "what_it_means": "The factory calls a separate program (the doctor, in our omni-render repository) as its reader and emitter. It is not part of this repository, so this row is shown as not runnable here; its recorded results are M7.",
+      "how_we_got_it": "ing/factory.py and r3/factory.py drive the doctor binary named by DOCTOR_BIN; the 2026-10-14..16 runs are summarised in the receipts.",
+      "use_in_your_work": "If you build omni-render and set DOCTOR_BIN you can re-run r3/factory.py CONCEPT yourself.",
+      "honest_limits": "Nothing about the factory build is claimed to be re-checked by this repository."
+    }
+  ]
+}

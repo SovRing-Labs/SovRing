@@ -1,0 +1,197 @@
+{
+ "_about": {
+  "repo": "doctor-core",
+  "url": "https://github.com/SovRing-Labs/doctor-core",
+  "one_line": "The doctor method: a core that finds what is wrong in code and in page geometry, finds donor code and exact fixes, tests them with an exact judge and learns which fix to try first - with its web HTML/JS suite (torus layers, T25 core), ternary fix ranker, clean-room pipeline notes and Common Crawl harness.",
+  "quicktest": "python3 tests/check.py live && node web/tests/torus-pairs.mjs web/samples",
+  "quicktest_s": 5,
+  "licence": "PolyForm Small Business 1.0.0 OR PolyForm Noncommercial 1.0.0 (+ Free Trial) for code; CC BY 4.0 for documents",
+  "status_file": "STATUS.md",
+  "generated": "2026-10-16",
+  "schema": 1,
+  "stage": "pre-alpha, about 70 %",
+  "source": "ranker/, tests/check.py, web/tests/torus-pairs.mjs, web/tools/js_doctor.py; every runnable row re-run on 2026-10-16 on an Intel i5-8365U laptop, logs in results/"
+ },
+ "tests": [
+  {
+   "id": "D1",
+   "title": "The ternary fix ranker orders the doctor's fix templates better than the knowledge base, on sites it never trained on",
+   "claim": "Held-out-site evaluation of 2,621 fix episodes in 5 folds by site: mean tries until the first passing template 1.138 as logged, 1.091 with the knowledge-base order, 1.040 with the ternary ranker; the ranker was better on 111 episodes and worse on 3",
+   "kind": "run",
+   "verify": "python3 tests/check.py offline",
+   "expect": "offline ok: mean tries to first pass logged 1.1381 kb 1.0908 rank 1.0404; episodes 2621; rank better 111 worse 3",
+   "evidence": [
+    "results/2026-10-16-ranker-offline.log",
+    "tests/ranker-heldout-offline.json",
+    "ranker/data/doctor-kb.3672.jsonl"
+   ],
+   "runtime_s": 30,
+   "needs": [
+    "python3",
+    "numpy"
+   ],
+   "cpu_flags": [],
+   "what_it_means": "The doctor tries repair templates one at a time and an exact judge accepts or rejects each. The ranker only decides the order. This test refits the ranker from scratch on four fifths of the sites in the recorded knowledge base, ranks the episodes of the fifth that were held out, and counts how many tries it takes until the first template the judge accepted. A lower number means fewer wasted tries. Passing shows the ordering gain is real on unseen sites and that the recorded number reproduces to nine decimals; it does not show a gain in how many defects end up fixed.",
+   "how_we_got_it": "ranker/eval_split.py reads ranker/data/doctor-kb.3672.jsonl (the recorded outcomes of the doctor's fix loop: 14 templates, family key, error vector, pass or fail), shuffles the sites with a fixed seed into 5 folds, refits the frozen sparse ternary reservoir readout on the other four folds, and compares three orderings over the same tried set. tests/check.py offline compares the output with tests/ranker-heldout-offline.json (recorded 2026-10-13). Re-run on an Intel i5-8365U laptop on 2026-10-16: results/2026-10-16-ranker-offline.log.",
+   "use_in_your_work": "Ordering candidate fixes by a tiny ternary model (no floating-point inside the reservoir, integer arithmetic only) so an automatic repair loop spends fewer judge calls. The same pattern fits any search where each candidate is checked by an exact oracle.",
+   "honest_limits": "Counts tries until the first pass among the templates the solver actually tried; it is not a ranking of all 14 templates for every defect. One recorded knowledge base, one split seed."
+  },
+  {
+   "id": "D2",
+   "title": "Live held-out A/B: the ranker saves tries on 28 unseen sites",
+   "claim": "On 28 held-out sites (5 folds), defects 281 to 18 with either order; tries 316 with the knowledge-base order, 289 with the ranker (8.5 % fewer); boxes fixed 225 versus 219",
+   "kind": "file",
+   "verify": "python3 tests/check.py live",
+   "expect": "live ok: 28 held-out sites, defects 281 -> kb 18 / rank 18; tries 316 -> 289; fixed kb 225 rank 219",
+   "evidence": [
+    "results/2026-10-16-ranker-live.log",
+    "tests/ranker-live/summary.json",
+    "tests/ranker-live/fold0/run-rk.log"
+   ],
+   "runtime_s": 2,
+   "needs": [
+    "python3"
+   ],
+   "cpu_flags": [],
+   "what_it_means": "This re-adds the per-site lines of the ten recorded engine runs (5 folds, each run once with the knowledge-base order and once with the ranker) and checks that the summary file says the same. It proves the summary was computed from those logs. It does not re-run the engine.",
+   "how_we_got_it": "ranker/run_live.sh drove the omni-render binary (core corpus --abc t25solve) per fold with a knowledge base and a ranker trained on the other folds only; each run printed 'defects A -> B (route 1: fixed F, tries N)' per site. ranker/live_summary.py sums those lines and the wall times; tests/check.py live runs it on a temporary copy of the shipped logs and compares with tests/ranker-live/summary.json. Engine runs: 2026-10-13 on a development machine; re-summary: 2026-10-16 laptop.",
+   "use_in_your_work": "Seeing how a learned ordering changes the cost of a verify-and-repair loop on pages the learner has not seen, with the raw per-site lines to audit.",
+   "honest_limits": "The ranker fixed 219 boxes against 225 for the knowledge-base order (final defect count equal at 18); the gain is in tries and wall time, not in fixes. The engine runs themselves need the omni-render binary and the page corpus, which are not in this repository."
+  },
+  {
+   "id": "D3",
+   "title": "The shipped ternary ranker is exactly what the trainer produces (deterministic refit)",
+   "claim": "Refitting from the recorded knowledge base reproduces ranker/data/ranker-ternary.json and the 24-row parity file; the readout holds only -1, 0 and +1 (4,004 non-zero of 14,336 weights, 14 templates, reservoir of 512 units)",
+   "kind": "run",
+   "verify": "python3 tests/check.py export",
+   "expect": "export ok: refit reproduces ranker-ternary.json and parity.json; 14 templates, reservoir N=512, 4004 non-zero of 14336 ternary weights",
+   "evidence": [
+    "results/2026-10-16-ranker-export.log",
+    "ranker/data/ranker-ternary.json",
+    "ranker/data/parity.json"
+   ],
+   "runtime_s": 30,
+   "needs": [
+    "python3",
+    "numpy"
+   ],
+   "cpu_flags": [],
+   "what_it_means": "The reservoir (input and recurrent weights) is generated from a 64-bit hash of a seed, so nothing in it is stored or fitted; only the ternary readout is fitted. Passing shows the published weights are the output of the published trainer on the published data, and that a second implementation of the scorer (the Rust side) has a parity file to match against.",
+   "how_we_got_it": "ranker/export.py fits on all sites of ranker/data/doctor-kb.3672.jsonl and writes the frozen ranker plus a parity set of 24 sampled rows with their float scores; tests/check.py export runs it into a temporary directory and compares both files (floats to 1e-9).",
+   "use_in_your_work": "A cheap, reproducible model whose whole definition is a seed plus a few thousand ternary weights: easy to audit, to port, and to run on a laptop.",
+   "honest_limits": "Reproducibility of the trainer, not a quality claim (see D1 and D2). The Rust scorer that must match parity.json (doctor_rank.rs) is not in this repository."
+  },
+  {
+   "id": "D4",
+   "title": "Torus Layers: the page's pair rule, recomputed by brute force, equals the engine's conflict list on 40 pages",
+   "claim": "9,552 boxes and 2,266,929 box pairs over 40 shipped layer sheets: overlap, occlusion and stacking counts and a pair hash all equal the engine's conflict list",
+   "kind": "run",
+   "verify": "node web/tests/torus-pairs.mjs web/samples",
+   "expect": "{\"mode\":\"check\",\"sheets\":40,\"agree\":40,\"boxes\":9552,\"pairs_tested\":2266929,\"disagree\":[],\"pass\":true}",
+   "evidence": [
+    "results/2026-10-16-torus-pairs.log",
+    "web/evidence/corpus-summary.json",
+    "web/evidence/gpu-check.log"
+   ],
+   "runtime_s": 3,
+   "needs": [
+    "node"
+   ],
+   "cpu_flags": [],
+   "what_it_means": "The engine finds conflicting boxes with a toroidal voxel grid; the viewer page re-tests every pair with a plain double loop (on the GPU when available) and must agree. This script is that double loop in node, run against the sheets the engine wrote. Passing shows the grid misses no pair and invents none on these 40 pages, and that the rule in the page is the rule in the sheets.",
+   "how_we_got_it": "web/tests/torus-pairs.mjs holds the viewer's pair rule (minimum overlap of 64 units on both axes, ancestor pairs skipped, higher paint rank on top, kind by layer and interactivity) and an order-independent hash; sheets are the engine station output 'core corpus --abc t25layers' of 2026-10-13. Run on the laptop on 2026-10-16 with node 18. A separate headless-browser WebGPU check on 51 pages (GPU equals station) is logged in web/evidence/gpu-check.log (not re-run here).",
+   "use_in_your_work": "Finding which painted boxes of a page sit on top of which others (and so which element hides a button), with a check that a fast spatial index and a slow exhaustive test agree.",
+   "honest_limits": "Only the 40 sheets under 60 KB are shipped, so large pages are not re-tested here. The sheets come from the engine, which is not in this repository. 'Stack' rows are normal paint stacking, not defects."
+  },
+  {
+   "id": "D5",
+   "title": "Negative: moving one box makes the Torus Layers check fail",
+   "claim": "After shifting one conflicting box far away in each of 27 sheets that have conflicts, the brute-force result differs from the engine's list in all 27",
+   "kind": "run",
+   "verify": "node web/tests/torus-pairs.mjs web/samples --tamper",
+   "expect": "{\"mode\":\"tamper\",\"tampered\":27,\"noticed\":27,\"missed\":[],\"pass\":true}",
+   "evidence": [
+    "results/2026-10-16-torus-pairs-tamper.log"
+   ],
+   "runtime_s": 3,
+   "needs": [
+    "node"
+   ],
+   "cpu_flags": [],
+   "what_it_means": "A check that cannot fail proves nothing. Here a box is moved on purpose and the check must complain. Passing shows D4 is sensitive to a single moved box.",
+   "how_we_got_it": "Same script with --tamper: for each sheet with at least one conflict, the top box of the first conflict is moved 100,000 units right and down before the comparison. Laptop, 2026-10-16.",
+   "use_in_your_work": "The pattern for any comparison of a fast and a slow method: also run it on deliberately damaged input and require a mismatch.",
+   "honest_limits": "Detects a large displacement of a box that takes part in a conflict; it is not a proof of detection of every small change."
+  },
+  {
+   "id": "D6",
+   "title": "Recorded doctor results re-check from the shipped result files",
+   "claim": "Top-100 sites with JavaScript on: 87,324 of 90,371 boxes pristine (96.63 %); JavaScript off: 52,283 of 53,746 (97.28 %); Common Crawl: 10,267 of 10,312 pages mapped, 45 engine crashes, 211 families; fix loop on 100 held-out crawl pages 1,200 to 70 defects (knowledge base, ranker) and 65 (online learner); one doctor head building a function from examples peaked at 97,376 KB resident",
+   "kind": "file",
+   "verify": "bash -c 'python3 tests/check.py results && python3 tests/check.py rss'",
+   "expect": "rss ok: one doctor head building ceil_div from examples, peak RSS 97376 KB (95.1 MiB), verified true",
+   "evidence": [
+    "results/2026-10-16-results-recheck.log",
+    "results/2026-10-16-rss.log",
+    "evidence/pristine-rerun/top100-js-ytd6.json",
+    "evidence/cc-doctor-0/map-summary.json",
+    "evidence/cc-doctor-0/ab/summary.json",
+    "tests/doctor-rss-ceil.log"
+   ],
+   "runtime_s": 2,
+   "needs": [
+    "python3"
+   ],
+   "cpu_flags": [],
+   "what_it_means": "'Pristine' is the doctor's own yardstick: a box is pristine when it satisfies the six exact geometric relations to its frame and siblings (no reference browser needed). These numbers are sums over the recorded per-page result files, recomputed here. Passing shows the quoted figures are what the files say; it does not re-run the engine.",
+   "how_we_got_it": "Engine runs of 2026-10-13 (top-100 pages: tools run through omni-render core corpus --abc t25map; Common Crawl set: cc/ harness, 10,312 pages fetched from crawl CC-MAIN-2026-39, mapped at 330 pages per second on a pod; fix loop arms kb, rk, lq-cold, lq-warm on 100 held-out pages). The RSS file is /usr/bin/time -v of omni-render core --abc need building ceil_div (2026-10-07). tests/check.py recomputes the sums.",
+   "use_in_your_work": "Judging a layout engine against its own exact geometry rather than against another browser's pixels, at web scale.",
+   "honest_limits": "The RSS includes the whole renderer binary mapped into memory, not only the doctor. Crawled pages are HTML only (unstyled, JavaScript off), so the Common Crawl numbers say little about styled pages. 45 pages crashed the engine (listed in evidence/cc-doctor-0/crashed.tsv). The 'online learner' arm's code is not in this repository."
+  },
+  {
+   "id": "D7",
+   "title": "JS/DOM doctor station: finds divergence roots between two DOM dumps",
+   "claim": "On a six-node fixture the map station reports 3 divergence roots (one missing subtree, one extra node, one attribute-set difference) in 3 families",
+   "kind": "run",
+   "verify": "python3 tests/check.py map",
+   "expect": "map ok: js_doctor map found 3 divergence roots ['attrs', 'extra', 'missing'] in 3 families on the fixture",
+   "evidence": [
+    "results/2026-10-16-js-doctor-map.log",
+    "web/tests/fixtures/chrome-dom.json",
+    "web/tests/fixtures/ours-dom.json"
+   ],
+   "runtime_s": 1,
+   "needs": [
+    "python3"
+   ],
+   "cpu_flags": [],
+   "what_it_means": "The JS doctor aligns a reference browser's DOM with the engine's DOM by path key and reports the first divergence of each kind at its root (a missing subtree once, with its size), grouped into families so one verified fix serves every member. Passing shows the map logic works on a small hand-written case.",
+   "how_we_got_it": "web/tools/js_doctor.py map DIR on two hand-written dumps (web/tests/fixtures). Laptop, 2026-10-16.",
+   "use_in_your_work": "Diffing two DOM trees or two JSON trees root-first so one cause is reported once instead of once per descendant.",
+   "honest_limits": "A toy fixture written for this test, not a real Chrome capture. The other stations (api, ident, gen-events, solve) need a browser and the engine."
+  },
+  {
+   "id": "D8",
+   "title": "External: the engine sources compile and fire inside omni-render with the t25 feature",
+   "claim": "engine/*.rs are the doctor and T25 core as compiled inside omni-render at commit ba2517b with cargo feature t25; the doctor stations (core corpus --abc t25map / t25solve / t25layers) run from that binary",
+   "kind": "external",
+   "verify": "bash -c 'git clone https://github.com/SovRing-Labs/omni-render && cd omni-render && git checkout ba2517b && cargo build --release --features t25 && ./target/release/omni-render core corpus --abc t25map --help'",
+   "expect": "a build with no errors and the --abc t25map usage text",
+   "evidence": [
+    "engine/README.md",
+    "docs/FINDINGS.md"
+   ],
+   "runtime_s": 900,
+   "needs": [
+    "cargo",
+    "git",
+    "network"
+   ],
+   "cpu_flags": [],
+   "what_it_means": "The Rust sources here are not a standalone crate yet; they only build as part of omni-render. This row names the exact build so you can check them. It is marked external because it needs the other repository and a long build, and was not run when this repository was assembled.",
+   "how_we_got_it": "Not run for this release (a full omni-render build was out of scope on the assembling laptop). The earlier engine results quoted in docs/FINDINGS.md come from development builds of the same files.",
+   "use_in_your_work": "Building the doctor into a rendering engine of your own once the standalone crate exists.",
+   "honest_limits": "Unverified for this repository; the standalone crate split is the next step."
+  }
+ ]
+}

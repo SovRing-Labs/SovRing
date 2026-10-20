@@ -1,0 +1,128 @@
+{
+  "_about": {
+    "repo": "omni-equations",
+    "url": "https://github.com/SovRing-Labs/omni-equations",
+    "one_line": "Our equation library: 67 concepts as dependency-free Rust, with their definitions, laws and recorded spec rows; free for the community.",
+    "quicktest": "python3 -I tools/verify.py . --only hamming,fib,gcd,mod_inverse,ntt | tail -1",
+    "quicktest_s": 25,
+    "licence": "Apache-2.0 (code) + CC BY 4.0 (documents)",
+    "status_file": "STATUS.md",
+    "generated": "2026-10-16",
+    "schema": 1,
+    "stage": "pre-alpha, about 70 %",
+    "source": "emit/*.rs, emit/index.json, specs/specs.jsonl, laws/mathkb.json; every row re-run on 2026-10-16 on an Intel i5-8365U laptop (rustc 1.98.0), logs in results/"
+  },
+  "tests": [
+    {
+      "id": "Q1",
+      "title": "39 emitted equations reproduce their 3,245 recorded spec rows",
+      "claim": "Compiled with rustc from this repository alone, 39 emitted concept files give the recorded output on every row of their spec (3,245 rows): 39 passed, 0 failed",
+      "kind": "run",
+      "verify": "python3 -I tools/verify.py . | tail -1 | grep -q '\"pass\": true' && echo ok",
+      "expect": "ok",
+      "evidence": [
+        "results/2026-10-16-verify.log",
+        "specs/specs.jsonl",
+        "emit/index.json"
+      ],
+      "runtime_s": 40,
+      "needs": [
+        "python3",
+        "rustc"
+      ],
+      "cpu_flags": [],
+      "what_it_means": "Each emitted file is one equation turned into a small Rust program. The spec file holds rows of inputs and the output the definition gives. This test compiles each program into a temporary folder and runs it on its rows; the program stops with an error if any answer differs. Passing means the shipped Rust really computes the specified function on all recorded rows.",
+      "how_we_got_it": "tools/verify.py reads emit/index.json and specs/specs.jsonl, rustc -C opt-level=1 each emit/<concept>.rs, writes the rows (the way the development tree's status.py does) and runs the binary. 2026-10-16, Intel i5-8365U laptop, rustc 1.98.0: 39 passed, 0 failed, 3,245 rows (results/2026-10-16-verify.log; about 11 s).",
+      "use_in_your_work": "Drop a concept file into your own project (gcd, modexp, NTT, Montgomery product) and keep its rows as test vectors.",
+      "honest_limits": "Rows are those recorded when the equation was built; they are not an exhaustive test. 28 of the 67 concepts have no rows here (Q5)."
+    },
+    {
+      "id": "Q2",
+      "title": "Negative control: tampered rows make every program fail",
+      "claim": "With every recorded output changed on purpose, all 39 programs reject their rows (39/39), so Q1's pass is not vacuous",
+      "kind": "run",
+      "verify": "python3 -I tools/verify.py . --teeth | tail -1 | grep -q '\"pass\": true' && echo ok",
+      "expect": "ok",
+      "evidence": [
+        "results/2026-10-16-verify-teeth.log"
+      ],
+      "runtime_s": 40,
+      "needs": [
+        "python3",
+        "rustc"
+      ],
+      "cpu_flags": [],
+      "what_it_means": "Same compile-and-run as Q1 but with wrong expected outputs. Each program has to fail. Passing means the row check can fail.",
+      "how_we_got_it": "tools/verify.py --teeth, 2026-10-16, laptop (results/2026-10-16-verify-teeth.log).",
+      "use_in_your_work": "Use the same tamper test on your own harness.",
+      "honest_limits": "Shows the check can fail; says nothing more about the equations."
+    },
+    {
+      "id": "Q3",
+      "title": "The 39 concept laws hold on fresh draws",
+      "claim": "The laws in laws/mathkb.json, one per spec'd concept, hold on 300 fresh seeded draws each: 39 laws, 0 failures",
+      "kind": "run",
+      "verify": "python3 -I tools/lawcheck.py . | tail -1 | grep -q '\"pass\": true' && echo ok",
+      "expect": "ok",
+      "evidence": [
+        "results/2026-10-16-lawcheck.log",
+        "laws/mathkb.json"
+      ],
+      "runtime_s": 20,
+      "needs": [
+        "python3"
+      ],
+      "cpu_flags": [],
+      "what_it_means": "Properties (not definitions) that each concept must satisfy, with generators of random inputs, are re-run in plain Python. Passing means they all hold on new draws.",
+      "how_we_got_it": "tools/lawcheck.py, 2026-10-16, laptop: 39 laws x 300 draws, 0 failed (results/2026-10-16-lawcheck.log).",
+      "use_in_your_work": "Property-test your own port of any of these equations.",
+      "honest_limits": "Random draws only; the laws test the concepts, which are the same functions as the Rust files only through the shared spec rows (Q1)."
+    },
+    {
+      "id": "Q4",
+      "title": "Every emitted file compiles and the index matches the files",
+      "claim": "All 67 emitted Rust files compile; emit/index.json and emit/*.rs name the same 67 concepts; every recorded equation has balanced parentheses",
+      "kind": "run",
+      "verify": "python3 -I tools/verify.py . --compile | tail -1 | grep -q '\"pass\": true' && echo ok",
+      "expect": "ok",
+      "evidence": [
+        "results/2026-10-16-compile.log",
+        "emit/index.json"
+      ],
+      "runtime_s": 40,
+      "needs": [
+        "python3",
+        "rustc"
+      ],
+      "cpu_flags": [],
+      "what_it_means": "The structural check: nothing in the library is a broken or orphaned file, including the 28 concepts that have no rows here.",
+      "how_we_got_it": "tools/verify.py --compile, rustc -C opt-level=0, 2026-10-16, laptop (results/2026-10-16-compile.log).",
+      "use_in_your_work": "Confidence that a concept file builds on a stock Rust toolchain with no dependencies.",
+      "honest_limits": "Compiling is not correctness; correctness is Q1 for the 39 and the build receipts for the rest."
+    },
+    {
+      "id": "Q5",
+      "title": "Honest negative: 28 concepts cannot be re-verified from this repository",
+      "claim": "28 of 67 concepts (the codec, range-decoder, ring-arithmetic and shuffle ones) have no spec rows here; the verifier lists them as NOT-RE-VERIFIABLE-HERE instead of counting them",
+      "kind": "run",
+      "verify": "python3 -c 'import json,subprocess; r=subprocess.run(['\"'\"'python3'\"'\"','\"'\"'-I'\"'\"','\"'\"'tools/verify.py'\"'\"','\"'\"'.'\"'\"','\"'\"'--only'\"'\"','\"'\"'idct4,vp9_lf4,ring_ln,rd_step'\"'\"'],capture_output=True,text=True); lines=[x for x in r.stdout.splitlines() if '\"'\"'NOT-RE-VERIFIABLE-HERE'\"'\"' in x]; names={x.split('\"'\"':'\"'\"',1)[0] for x in lines}; d=json.loads(r.stdout.splitlines()[-1]); assert r.returncode==1 and names=={'\"'\"'idct4'\"'\"','\"'\"'vp9_lf4'\"'\"','\"'\"'ring_ln'\"'\"','\"'\"'rd_step'\"'\"'} and len(lines)==4 and d['\"'\"'passed'\"'\"']==0 and d['\"'\"'failed'\"'\"']==0 and d['\"'\"'not_reverifiable'\"'\"']==4 and d['\"'\"'pass'\"'\"'] is False; print(4)'",
+      "expect": "4",
+      "evidence": [
+        "results/2026-10-16-not-reverifiable.log",
+        "results/2026-10-16-factory-receipts.json"
+      ],
+      "runtime_s": 5,
+      "needs": [
+        "python3"
+      ],
+      "cpu_flags": [],
+      "what_it_means": "Those 28 concepts were checked at build time against a black-box reference (rows checked per concept are in the receipts) but their rows and references are not part of this repository, and none of them has a cemented law yet. The verifier says so rather than passing them.",
+      "how_we_got_it": "tools/verify.py --only <four of the 28>, 2026-10-16: 4 listed, 0 passed (results/2026-10-16-not-reverifiable.log). The build receipts: results/2026-10-16-factory-receipts.json (45 concepts incl. these).",
+      "use_in_your_work": "Treat these 28 as emitted but unconfirmed by you until you check them against the published specification they cite.",
+      "honest_limits": "Receipts are recorded results, not re-run here.",
+      "corrections": [
+        "E2 2026-10-17: explicitly assert the verifier intentional exit1 and exactly four unavailable concepts; preserve negative under pipefail."
+      ]
+    }
+  ]
+}
